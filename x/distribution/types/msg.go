@@ -6,7 +6,7 @@ import (
 )
 
 // Verify interface at compile time
-var _, _, _ sdk.Msg = &MsgSetWithdrawAddress{}, &MsgWithdrawDelegatorReward{}, &MsgWithdrawValidatorCommission{}
+var _, _ sdk.Msg = &MsgSetWithdrawAddress{}, &MsgWithdrawValidatorCommission{}
 
 // msg struct for changing the withdraw address for a delegator (or validator self-delegation)
 type MsgSetWithdrawAddress struct {
@@ -42,44 +42,6 @@ func (msg MsgSetWithdrawAddress) ValidateBasic() sdk.Error {
 	}
 	if msg.WithdrawAddress.Empty() {
 		return ErrNilWithdrawAddr(DefaultCodespace)
-	}
-	return nil
-}
-
-// msg struct for delegation withdraw from a single validator
-type MsgWithdrawDelegatorReward struct {
-	DelegatorAddress sdk.AccAddress `json:"delegator_address" yaml:"delegator_address"`
-	ValidatorAddress sdk.ValAddress `json:"validator_address" yaml:"validator_address"`
-}
-
-func NewMsgWithdrawDelegatorReward(delAddr sdk.AccAddress, valAddr sdk.ValAddress) MsgWithdrawDelegatorReward {
-	return MsgWithdrawDelegatorReward{
-		DelegatorAddress: delAddr,
-		ValidatorAddress: valAddr,
-	}
-}
-
-func (msg MsgWithdrawDelegatorReward) Route() string { return ModuleName }
-func (msg MsgWithdrawDelegatorReward) Type() string  { return "withdraw_delegator_reward" }
-
-// Return address that must sign over msg.GetSignBytes()
-func (msg MsgWithdrawDelegatorReward) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.DelegatorAddress)}
-}
-
-// get the bytes for the message signer to sign on
-func (msg MsgWithdrawDelegatorReward) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-// quick validity check
-func (msg MsgWithdrawDelegatorReward) ValidateBasic() sdk.Error {
-	if msg.DelegatorAddress.Empty() {
-		return ErrNilDelegatorAddr(DefaultCodespace)
-	}
-	if msg.ValidatorAddress.Empty() {
-		return ErrNilValidatorAddr(DefaultCodespace)
 	}
 	return nil
 }

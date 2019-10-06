@@ -32,28 +32,6 @@ func TestMsgSetWithdrawAddress(t *testing.T) {
 	}
 }
 
-// test ValidateBasic for MsgWithdrawDelegatorReward
-func TestMsgWithdrawDelegatorReward(t *testing.T) {
-	tests := []struct {
-		delegatorAddr sdk.AccAddress
-		validatorAddr sdk.ValAddress
-		expectPass    bool
-	}{
-		{delAddr1, valAddr1, true},
-		{emptyDelAddr, valAddr1, false},
-		{delAddr1, emptyValAddr, false},
-		{emptyDelAddr, emptyValAddr, false},
-	}
-	for i, tc := range tests {
-		msg := NewMsgWithdrawDelegatorReward(tc.delegatorAddr, tc.validatorAddr)
-		if tc.expectPass {
-			require.Nil(t, msg.ValidateBasic(), "test index: %v", i)
-		} else {
-			require.NotNil(t, msg.ValidateBasic(), "test index: %v", i)
-		}
-	}
-}
-
 // test ValidateBasic for MsgWithdrawValidatorCommission
 func TestMsgWithdrawValidatorCommission(t *testing.T) {
 	tests := []struct {

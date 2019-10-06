@@ -17,9 +17,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case types.MsgSetWithdrawAddress:
 			return handleMsgModifyWithdrawAddress(ctx, msg, k)
 
-		case types.MsgWithdrawDelegatorReward:
-			return handleMsgWithdrawDelegatorReward(ctx, msg, k)
-
 		case types.MsgWithdrawValidatorCommission:
 			return handleMsgWithdrawValidatorCommission(ctx, msg, k)
 
