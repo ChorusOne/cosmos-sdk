@@ -26,6 +26,7 @@ type Keeper struct {
 	storeTKey          sdk.StoreKey
 	cdc                *codec.Codec
 	supplyKeeper       types.SupplyKeeper
+	bankKeeper         types.BankKeeper
 	hooks              types.StakingHooks
 	paramstore         params.Subspace
 	validatorCache     map[string]cachedValidator
@@ -36,7 +37,7 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new staking Keeper instance
-func NewKeeper(cdc *codec.Codec, key, tkey sdk.StoreKey, supplyKeeper types.SupplyKeeper,
+func NewKeeper(cdc *codec.Codec, key, tkey sdk.StoreKey, supplyKeeper types.SupplyKeeper, bankKeeper types.BankKeeper,
 	paramstore params.Subspace, codespace sdk.CodespaceType) Keeper {
 
 	// ensure bonded and not bonded module accounts are set
@@ -53,6 +54,7 @@ func NewKeeper(cdc *codec.Codec, key, tkey sdk.StoreKey, supplyKeeper types.Supp
 		storeTKey:          tkey,
 		cdc:                cdc,
 		supplyKeeper:       supplyKeeper,
+		bankKeeper:         bankKeeper,
 		paramstore:         paramstore.WithKeyTable(ParamKeyTable()),
 		hooks:              nil,
 		validatorCache:     make(map[string]cachedValidator, aminoCacheSize),

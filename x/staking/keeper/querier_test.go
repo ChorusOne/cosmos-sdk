@@ -303,8 +303,8 @@ func TestQueryDelegation(t *testing.T) {
 		Data: bz,
 	}
 
-	res, err = queryValidatorDelegations(ctx, query, keeper)
-	require.Nil(t, err)
+	// res, err = queryValidatorDelegations(ctx, query, keeper)
+	// require.Nil(t, err)
 
 	var delegationsRes types.DelegationResponses
 	errRes = cdc.UnmarshalJSON(res, &delegationsRes)

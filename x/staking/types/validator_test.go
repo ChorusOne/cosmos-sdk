@@ -14,13 +14,13 @@ import (
 )
 
 func TestValidatorTestEquivalent(t *testing.T) {
-	val1 := NewValidator(valAddr1, pk1, Description{})
-	val2 := NewValidator(valAddr1, pk1, Description{})
+	val1 := NewValidator(valAddr1, pk1, Description{}, "TEST")
+	val2 := NewValidator(valAddr1, pk1, Description{}, "TEST")
 
 	ok := val1.TestEquivalent(val2)
 	require.True(t, ok)
 
-	val2 = NewValidator(valAddr2, pk2, Description{})
+	val2 = NewValidator(valAddr2, pk2, Description{}, "TEST")
 
 	ok = val1.TestEquivalent(val2)
 	require.False(t, ok)
@@ -56,7 +56,7 @@ func TestUpdateDescription(t *testing.T) {
 }
 
 func TestABCIValidatorUpdate(t *testing.T) {
-	validator := NewValidator(valAddr1, pk1, Description{})
+	validator := NewValidator(valAddr1, pk1, Description{}, "TEST")
 
 	abciVal := validator.ABCIValidatorUpdate()
 	require.Equal(t, tmtypes.TM2PB.PubKey(validator.ConsPubKey), abciVal.PubKey)
@@ -64,7 +64,7 @@ func TestABCIValidatorUpdate(t *testing.T) {
 }
 
 func TestABCIValidatorUpdateZero(t *testing.T) {
-	validator := NewValidator(valAddr1, pk1, Description{})
+	validator := NewValidator(valAddr1, pk1, Description{}, "TEST")
 
 	abciVal := validator.ABCIValidatorUpdateZero()
 	require.Equal(t, tmtypes.TM2PB.PubKey(validator.ConsPubKey), abciVal.PubKey)
@@ -112,7 +112,7 @@ func TestRemoveTokens(t *testing.T) {
 }
 
 func TestAddTokensValidatorBonded(t *testing.T) {
-	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{})
+	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{}, "TEST")
 	validator = validator.UpdateStatus(sdk.Bonded)
 	validator, delShares := validator.AddTokensFromDel(sdk.NewInt(10))
 
@@ -122,7 +122,7 @@ func TestAddTokensValidatorBonded(t *testing.T) {
 }
 
 func TestAddTokensValidatorUnbonding(t *testing.T) {
-	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{})
+	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{}, "TEST")
 	validator = validator.UpdateStatus(sdk.Unbonding)
 	validator, delShares := validator.AddTokensFromDel(sdk.NewInt(10))
 
@@ -134,7 +134,7 @@ func TestAddTokensValidatorUnbonding(t *testing.T) {
 
 func TestAddTokensValidatorUnbonded(t *testing.T) {
 
-	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{})
+	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{}, "TEST")
 	validator = validator.UpdateStatus(sdk.Unbonded)
 	validator, delShares := validator.AddTokensFromDel(sdk.NewInt(10))
 
@@ -178,7 +178,7 @@ func TestRemoveDelShares(t *testing.T) {
 }
 
 func TestAddTokensFromDel(t *testing.T) {
-	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{})
+	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{}, "TEST")
 
 	validator, shares := validator.AddTokensFromDel(sdk.NewInt(6))
 	require.True(sdk.DecEq(t, sdk.NewDec(6), shares))
@@ -192,7 +192,7 @@ func TestAddTokensFromDel(t *testing.T) {
 }
 
 func TestUpdateStatus(t *testing.T) {
-	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{})
+	validator := NewValidator(sdk.ValAddress(pk1.Address().Bytes()), pk1, Description{}, "TEST")
 	validator, _ = validator.AddTokensFromDel(sdk.NewInt(100))
 	require.Equal(t, sdk.Unbonded, validator.Status)
 	require.Equal(t, int64(100), validator.Tokens.Int64())
@@ -227,7 +227,7 @@ func TestPossibleOverflow(t *testing.T) {
 }
 
 func TestValidatorMarshalUnmarshalJSON(t *testing.T) {
-	validator := NewValidator(valAddr1, pk1, Description{})
+	validator := NewValidator(valAddr1, pk1, Description{}, "TEST")
 	js, err := codec.Cdc.MarshalJSON(validator)
 	require.NoError(t, err)
 	require.NotEmpty(t, js)
@@ -239,7 +239,7 @@ func TestValidatorMarshalUnmarshalJSON(t *testing.T) {
 }
 
 func TestValidatorSetInitialCommission(t *testing.T) {
-	val := NewValidator(valAddr1, pk1, Description{})
+	val := NewValidator(valAddr1, pk1, Description{}, "TEST")
 	testCases := []struct {
 		validator   Validator
 		commission  Commission
@@ -273,7 +273,7 @@ func TestValidatorSetInitialCommission(t *testing.T) {
 }
 
 func TestValidatorMarshalYAML(t *testing.T) {
-	validator := NewValidator(valAddr1, pk1, Description{})
+	validator := NewValidator(valAddr1, pk1, Description{}, "TEST")
 	bechifiedPub, err := sdk.Bech32ifyConsPub(validator.ConsPubKey)
 	require.NoError(t, err)
 	bs, err := yaml.Marshal(validator)
@@ -299,6 +299,9 @@ func TestValidatorMarshalYAML(t *testing.T) {
       max_change_rate: "0.000000000000000000"
     update_time: 1970-01-01T00:00:00Z
   minselfdelegation: "1"
+  sharesdenomprefix: TEST
+  feepool: []
+  lastfeepool: []
 `, validator.OperatorAddress.String(), bechifiedPub)
 	require.Equal(t, want, string(bs))
 }

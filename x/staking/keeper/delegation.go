@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,53 +15,15 @@ func (k Keeper) GetDelegation(ctx sdk.Context,
 	delAddr sdk.AccAddress, valAddr sdk.ValAddress) (
 	delegation types.Delegation, found bool) {
 
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetDelegationKey(delAddr, valAddr)
-	value := store.Get(key)
-	if value == nil {
-		return delegation, false
+	val, _ := k.GetValidator(ctx, valAddr)
+	coins := k.bankKeeper.GetCoins(ctx, delAddr)
+	denom := fmt.Sprintf("%s%s", val.GetSharesDenomPrefix(), k.GetParams(ctx).BondDenom)
+	amount := coins.AmountOf(denom)
+	if amount.GT(sdk.ZeroInt()) {
+		return types.NewDelegation(delAddr, valAddr, coins.AmountOf(denom).ToDec()), true
+	} else {
+		return types.Delegation{}, false
 	}
-
-	delegation = types.MustUnmarshalDelegation(k.cdc, value)
-	return delegation, true
-}
-
-// IterateAllDelegations iterate through all of the delegations
-func (k Keeper) IterateAllDelegations(ctx sdk.Context, cb func(delegation types.Delegation) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.DelegationKey)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		delegation := types.MustUnmarshalDelegation(k.cdc, iterator.Value())
-		if cb(delegation) {
-			break
-		}
-	}
-}
-
-// GetAllDelegations returns all delegations used during genesis dump
-func (k Keeper) GetAllDelegations(ctx sdk.Context) (delegations []types.Delegation) {
-	k.IterateAllDelegations(ctx, func(delegation types.Delegation) bool {
-		delegations = append(delegations, delegation)
-		return false
-	})
-	return delegations
-}
-
-// return all delegations to a specific validator. Useful for querier.
-func (k Keeper) GetValidatorDelegations(ctx sdk.Context, valAddr sdk.ValAddress) (delegations []types.Delegation) {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.DelegationKey)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		delegation := types.MustUnmarshalDelegation(k.cdc, iterator.Value())
-		if delegation.GetValidatorAddr().Equals(valAddr) {
-			delegations = append(delegations, delegation)
-		}
-	}
-	return delegations
 }
 
 // return a given amount of all the delegations from a delegator
@@ -466,18 +429,10 @@ func (k Keeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt sdk.In
 		return sdk.ZeroDec(), types.ErrDelegatorShareExRateInvalid(k.Codespace())
 	}
 
-	// Get or create the delegation object
-	delegation, found := k.GetDelegation(ctx, delAddr, validator.OperatorAddress)
-	if !found {
-		delegation = types.NewDelegation(delAddr, validator.OperatorAddress, sdk.ZeroDec())
-	}
+	valAddr := validator.OperatorAddress
+	sharesDenomName := strings.ToLower(fmt.Sprintf("%s%s", validator.GetSharesDenomPrefix(), k.BondDenom(ctx)))
 
-	// call the appropriate hook if present
-	if found {
-		k.BeforeDelegationSharesModified(ctx, delAddr, validator.OperatorAddress)
-	} else {
-		k.BeforeDelegationCreated(ctx, delAddr, validator.OperatorAddress)
-	}
+	// here be dragons...
 
 	// if subtractAccount is true then we are
 	// performing a delegation and not a redelegation, thus the source tokens are
@@ -498,10 +453,25 @@ func (k Keeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt sdk.In
 		}
 
 		coins := sdk.NewCoins(sdk.NewCoin(k.BondDenom(ctx), bondAmt))
-		err := k.supplyKeeper.DelegateCoinsFromAccountToModule(ctx, delegation.DelegatorAddress, sendName, coins)
+		err := k.supplyKeeper.DelegateCoinsFromAccountToModule(ctx, delAddr, sendName, coins)
 		if err != nil {
 			return sdk.Dec{}, err
 		}
+
+		validator, newShares = k.AddValidatorTokensAndShares(ctx, validator, bondAmt)
+
+		// Update delegation
+		vouchers := sdk.NewCoins(sdk.NewCoin(sharesDenomName, newShares.TruncateInt()))
+		err = k.supplyKeeper.MintCoins(ctx, sendName, vouchers)
+		if err != nil {
+			return sdk.Dec{}, err
+		}
+
+		err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, sendName, delAddr, vouchers)
+		if err != nil {
+			return sdk.Dec{}, err
+		}
+
 	} else {
 
 		// potentially transfer tokens between pools, if
@@ -521,14 +491,8 @@ func (k Keeper) Delegate(ctx sdk.Context, delAddr sdk.AccAddress, bondAmt sdk.In
 		}
 	}
 
-	validator, newShares = k.AddValidatorTokensAndShares(ctx, validator, bondAmt)
-
-	// Update delegation
-	delegation.Shares = delegation.Shares.Add(newShares)
-	k.SetDelegation(ctx, delegation)
-
 	// Call the after-modification hook
-	k.AfterDelegationModified(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress)
+	k.AfterDelegationModified(ctx, delAddr, valAddr)
 
 	return newShares, nil
 }

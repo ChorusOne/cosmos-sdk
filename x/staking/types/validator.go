@@ -19,10 +19,11 @@ import (
 // nolint
 const (
 	// TODO: Why can't we just have one string description which can be JSON by convention
-	MaxMonikerLength  = 70
-	MaxIdentityLength = 3000
-	MaxWebsiteLength  = 140
-	MaxDetailsLength  = 280
+	MaxMonikerLength     = 70
+	MaxIdentityLength    = 3000
+	MaxWebsiteLength     = 140
+	MaxDetailsLength     = 280
+	MaxSharesDenomPrefix = 6
 )
 
 // Implements Validator interface
@@ -47,6 +48,9 @@ type Validator struct {
 	UnbondingCompletionTime time.Time      `json:"unbonding_time" yaml:"unbonding_time"`           // if unbonding, min time for the validator to complete unbonding
 	Commission              Commission     `json:"commission" yaml:"commission"`                   // commission parameters
 	MinSelfDelegation       sdk.Int        `json:"min_self_delegation" yaml:"min_self_delegation"` // validator's self declared minimum self delegation
+	SharesDenomPrefix       string         `json:"shares_denom_prefix"`                            // chain unique prefix for a validator's shares token
+	FeePool                 sdk.DecCoins   `json:"fee_pool"`                                       // current nonBondDenom fee Pool
+	LastFeePool             sdk.DecCoins   `json:"last_fee_pool"`                                  // last nonBondDenom fee Pool, used as a temporary holding during auction
 }
 
 // custom marshal yaml function due to consensus pubkey
@@ -63,6 +67,9 @@ func (v Validator) MarshalYAML() (interface{}, error) {
 		UnbondingCompletionTime time.Time
 		Commission              Commission
 		MinSelfDelegation       sdk.Int
+		SharesDenomPrefix       string
+		FeePool                 sdk.DecCoins
+		LastFeePool             sdk.DecCoins
 	}{
 		OperatorAddress:         v.OperatorAddress,
 		ConsPubKey:              sdk.MustBech32ifyConsPub(v.ConsPubKey),
@@ -75,6 +82,9 @@ func (v Validator) MarshalYAML() (interface{}, error) {
 		UnbondingCompletionTime: v.UnbondingCompletionTime,
 		Commission:              v.Commission,
 		MinSelfDelegation:       v.MinSelfDelegation,
+		SharesDenomPrefix:       v.SharesDenomPrefix,
+		FeePool:                 v.FeePool,
+		LastFeePool:             v.LastFeePool,
 	})
 	if err != nil {
 		return nil, err
@@ -102,7 +112,7 @@ func (v Validators) ToSDKValidators() (validators []exported.ValidatorI) {
 }
 
 // NewValidator - initialize a new validator
-func NewValidator(operator sdk.ValAddress, pubKey crypto.PubKey, description Description) Validator {
+func NewValidator(operator sdk.ValAddress, pubKey crypto.PubKey, description Description, denomPrefix string) Validator {
 	return Validator{
 		OperatorAddress:         operator,
 		ConsPubKey:              pubKey,
@@ -115,6 +125,9 @@ func NewValidator(operator sdk.ValAddress, pubKey crypto.PubKey, description Des
 		UnbondingCompletionTime: time.Unix(0, 0).UTC(),
 		Commission:              NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		MinSelfDelegation:       sdk.OneInt(),
+		SharesDenomPrefix:       denomPrefix,
+		FeePool:                 sdk.DecCoins(nil),
+		LastFeePool:             sdk.DecCoins(nil),
 	}
 }
 
@@ -155,10 +168,15 @@ func (v Validator) String() string {
   Unbonding Height:           %d
   Unbonding Completion Time:  %v
   Minimum Self Delegation:    %v
-  Commission:                 %s`, v.OperatorAddress, bechConsPubKey,
+	Commission:                 %s
+  Shares Prefix:              %s
+  Shares Conversion Rate:     %v
+  Fee Pool:                   %v`,
+		v.OperatorAddress, bechConsPubKey,
 		v.Jailed, v.Status, v.Tokens,
 		v.DelegatorShares, v.Description,
-		v.UnbondingHeight, v.UnbondingCompletionTime, v.MinSelfDelegation, v.Commission)
+		v.UnbondingHeight, v.UnbondingCompletionTime, v.MinSelfDelegation,
+		v.Commission, v.SharesDenomPrefix, v.GetSharesConversionRate(), v.GetFeePool())
 }
 
 // this is a helper struct used for JSON de- and encoding only
@@ -174,6 +192,10 @@ type bechValidator struct {
 	UnbondingCompletionTime time.Time      `json:"unbonding_time" yaml:"unbonding_time"`           // if unbonding, min time for the validator to complete unbonding
 	Commission              Commission     `json:"commission" yaml:"commission"`                   // commission parameters
 	MinSelfDelegation       sdk.Int        `json:"min_self_delegation" yaml:"min_self_delegation"` // minimum self delegation
+	SharesDenomPrefix       string         `json:"shares_denom_prefix" yaml:"shares_denom_prefix"` // delegation voucher prefix
+	FeePool                 sdk.DecCoins   `json:"fee_pool" yaml:"fee_pool"`                       // current nonBondDenom fee Pool
+	LastFeePool             sdk.DecCoins   `json:"last_fee_pool" yaml:"last_fee_pool"`             // last nonBondDenom fee Pool, used as a temporary holding during auction
+
 }
 
 // MarshalJSON marshals the validator to JSON using Bech32
@@ -195,6 +217,9 @@ func (v Validator) MarshalJSON() ([]byte, error) {
 		UnbondingCompletionTime: v.UnbondingCompletionTime,
 		MinSelfDelegation:       v.MinSelfDelegation,
 		Commission:              v.Commission,
+		SharesDenomPrefix:       v.SharesDenomPrefix,
+		FeePool:                 v.FeePool,
+		LastFeePool:             v.LastFeePool,
 	})
 }
 
@@ -220,6 +245,9 @@ func (v *Validator) UnmarshalJSON(data []byte) error {
 		UnbondingCompletionTime: bv.UnbondingCompletionTime,
 		Commission:              bv.Commission,
 		MinSelfDelegation:       bv.MinSelfDelegation,
+		SharesDenomPrefix:       bv.SharesDenomPrefix,
+		FeePool:                 bv.FeePool,
+		LastFeePool:             bv.LastFeePool,
 	}
 	return nil
 }
@@ -232,7 +260,8 @@ func (v Validator) TestEquivalent(v2 Validator) bool {
 		v.Tokens.Equal(v2.Tokens) &&
 		v.DelegatorShares.Equal(v2.DelegatorShares) &&
 		v.Description == v2.Description &&
-		v.Commission.Equal(v2.Commission)
+		v.Commission.Equal(v2.Commission) &&
+		v.SharesDenomPrefix == v2.SharesDenomPrefix
 }
 
 // return the TM validator address
@@ -356,17 +385,28 @@ func (v Validator) InvalidExRate() bool {
 
 // calculate the token worth of provided shares
 func (v Validator) TokensFromShares(shares sdk.Dec) sdk.Dec {
+	if v.DelegatorShares.Equal(sdk.ZeroDec()) {
+		return shares
+	}
+
 	return (shares.MulInt(v.Tokens)).Quo(v.DelegatorShares)
 }
 
 // calculate the token worth of provided shares, truncated
 func (v Validator) TokensFromSharesTruncated(shares sdk.Dec) sdk.Dec {
+	if v.DelegatorShares.Equal(sdk.ZeroDec()) {
+		return shares
+	}
+
 	return (shares.MulInt(v.Tokens)).QuoTruncate(v.DelegatorShares)
 }
 
 // TokensFromSharesRoundUp returns the token worth of provided shares, rounded
 // up.
 func (v Validator) TokensFromSharesRoundUp(shares sdk.Dec) sdk.Dec {
+	if v.DelegatorShares.Equal(sdk.ZeroDec()) {
+		return shares
+	}
 	return (shares.MulInt(v.Tokens)).QuoRoundUp(v.DelegatorShares)
 }
 
@@ -376,8 +416,8 @@ func (v Validator) SharesFromTokens(amt sdk.Int) (sdk.Dec, sdk.Error) {
 	if v.Tokens.IsZero() {
 		return sdk.ZeroDec(), ErrInsufficientShares(DefaultCodespace)
 	}
+	return amt.ToDec().Quo(v.GetSharesConversionRate()), nil
 
-	return v.GetDelegatorShares().MulInt(amt).QuoInt(v.GetTokens()), nil
 }
 
 // SharesFromTokensTruncated returns the truncated shares of a delegation given
@@ -386,8 +426,7 @@ func (v Validator) SharesFromTokensTruncated(amt sdk.Int) (sdk.Dec, sdk.Error) {
 	if v.Tokens.IsZero() {
 		return sdk.ZeroDec(), ErrInsufficientShares(DefaultCodespace)
 	}
-
-	return v.GetDelegatorShares().MulInt(amt).QuoTruncate(v.GetTokens().ToDec()), nil
+	return amt.ToDec().QuoTruncate(v.GetSharesConversionRate()), nil
 }
 
 // get the bonded tokens which the validator holds
@@ -419,27 +458,69 @@ func (v Validator) UpdateStatus(newStatus sdk.BondStatus) Validator {
 	return v
 }
 
-// AddTokensFromDel adds tokens to a validator
-func (v Validator) AddTokensFromDel(amount sdk.Int) (Validator, sdk.Dec) {
+func (v Validator) AddCoinsToFeePool(coins sdk.DecCoins) Validator {
+	v.FeePool = v.FeePool.Add(coins)
+	return v
+}
+
+// on unsettled auction for denom, return balance of denom to fee_pool
+func (v Validator) ReturnCoinsToFeePool(denom string) Validator {
+	amount := v.LastFeePool.AmountOf(denom)
+	coin := sdk.DecCoins{{denom, amount}}
+	v.LastFeePool = v.LastFeePool.Sub(coin)
+	v.FeePool = v.FeePool.Add(coin)
+	return v
+}
+
+func (v Validator) SettleFeePool(pool Pool, denom string, coin sdk.DecCoin) Validator {
+	amount := v.LastFeePool.AmountOf(denom)
+	subCoin := sdk.DecCoins{{denom, amount}}
+	v.LastFeePool = v.LastFeePool.Sub(subCoin)
+	intcoin, change := coin.TruncateDecimal()
+	v.FeePool = v.FeePool.Add(sdk.DecCoins{change})
+	v.AddTokensFromDel(intcoin.Amount)
+	return v
+}
+
+func (v Validator) EmptyCurrentFeePool() Validator {
+	// assert last_fee_pool is empty
+	if !v.LastFeePool.IsZero() {
+		panic(fmt.Sprint("should not happen: last_fee_pool is not zero"))
+	}
+	v.LastFeePool = v.FeePool
+	v.FeePool = sdk.DecCoins(nil)
+	return v
+}
+
+func (v Validator) AddSharesFromDel(amount sdk.Int) (Validator, sdk.Dec) {
 
 	// calculate the shares to issue
 	var issuedShares sdk.Dec
-	if v.DelegatorShares.IsZero() {
-		// the first delegation to a validator sets the exchange rate to one
-		issuedShares = amount.ToDec()
-	} else {
-		shares, err := v.SharesFromTokens(amount)
+	if v.DelegatorShares.GT(sdk.ZeroDec()) {
+		// bug here. issuedShares scope is bad. we return 0
+
+		issuedShares, err := v.SharesFromTokens(amount)
 		if err != nil {
 			panic(err)
 		}
 
-		issuedShares = shares
+		v.DelegatorShares = v.DelegatorShares.Add(issuedShares) // having this in both branches is ridiculous _but_ go fails to compile otherwise. Which is downright daft.
+		return v, issuedShares
+	} else {
+		// the first delegation to a validator sets the exchange rate to one
+		issuedShares = amount.ToDec()
+		v.DelegatorShares = v.DelegatorShares.Add(issuedShares)
+		return v, issuedShares
 	}
+}
+
+// AddTokensFromDel adds tokens to a validator
+// CONTRACT: Tokens are assumed to have come from not-bonded pool.
+func (v Validator) AddTokensFromDel(amount sdk.Int) (Validator, sdk.Dec) {
 
 	v.Tokens = v.Tokens.Add(amount)
-	v.DelegatorShares = v.DelegatorShares.Add(issuedShares)
 
-	return v, issuedShares
+	return v, amount.ToDec()
 }
 
 // RemoveTokens removes tokens from a validator
@@ -494,3 +575,12 @@ func (v Validator) GetConsensusPower() int64      { return v.ConsensusPower() }
 func (v Validator) GetCommission() sdk.Dec        { return v.Commission.Rate }
 func (v Validator) GetMinSelfDelegation() sdk.Int { return v.MinSelfDelegation }
 func (v Validator) GetDelegatorShares() sdk.Dec   { return v.DelegatorShares }
+func (v Validator) GetSharesDenomPrefix() string  { return v.SharesDenomPrefix }
+func (v Validator) GetSharesConversionRate() sdk.Dec {
+	if v.DelegatorShares.Equal(sdk.ZeroDec()) {
+		return sdk.NewDec(1.0)
+	} else {
+		return v.Tokens.ToDec().Quo(v.DelegatorShares)
+	}
+}
+func (v Validator) GetFeePool() sdk.DecCoins { return v.FeePool.Add(v.LastFeePool) }

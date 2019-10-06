@@ -16,10 +16,10 @@ func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 		ModuleAccountInvariants(k))
 	ir.RegisterRoute(types.ModuleName, "nonnegative-power",
 		NonNegativePowerInvariant(k))
-	ir.RegisterRoute(types.ModuleName, "positive-delegation",
-		PositiveDelegationInvariant(k))
-	ir.RegisterRoute(types.ModuleName, "delegator-shares",
-		DelegatorSharesInvariant(k))
+	// ir.RegisterRoute(types.ModuleName, "positive-delegation",
+	// 	PositiveDelegationInvariant(k))
+	// ir.RegisterRoute(types.ModuleName, "delegator-shares",
+	// 	DelegatorSharesInvariant(k))
 }
 
 // AllInvariants runs all invariants of the staking module.
@@ -32,16 +32,17 @@ func AllInvariants(k Keeper) sdk.Invariant {
 		}
 
 		res, stop = NonNegativePowerInvariant(k)(ctx)
-		if stop {
-			return res, stop
-		}
-
-		res, stop = PositiveDelegationInvariant(k)(ctx)
-		if stop {
-			return res, stop
-		}
-
-		return DelegatorSharesInvariant(k)(ctx)
+		return res, stop
+		// if stop {
+		// 	return res, stop
+		// }
+		//
+		// res, stop = PositiveDelegationInvariant(k)(ctx)
+		// if stop {
+		// 	return res, stop
+		// }
+		//
+		// return DelegatorSharesInvariant(k)(ctx)
 	}
 }
 
@@ -126,56 +127,32 @@ func NonNegativePowerInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
-// PositiveDelegationInvariant checks that all stored delegations have > 0 shares.
-func PositiveDelegationInvariant(k Keeper) sdk.Invariant {
-	return func(ctx sdk.Context) (string, bool) {
-		var msg string
-		var count int
-
-		delegations := k.GetAllDelegations(ctx)
-		for _, delegation := range delegations {
-			if delegation.Shares.IsNegative() {
-				count++
-				msg += fmt.Sprintf("\tdelegation with negative shares: %+v\n", delegation)
-			}
-			if delegation.Shares.IsZero() {
-				count++
-				msg += fmt.Sprintf("\tdelegation with zero shares: %+v\n", delegation)
-			}
-		}
-		broken := count != 0
-
-		return sdk.FormatInvariant(types.ModuleName, "positive delegations", fmt.Sprintf(
-			"%d invalid delegations found\n%s", count, msg)), broken
-	}
-}
-
 // DelegatorSharesInvariant checks whether all the delegator shares which persist
 // in the delegator object add up to the correct total delegator shares
 // amount stored in each validator.
-func DelegatorSharesInvariant(k Keeper) sdk.Invariant {
-	return func(ctx sdk.Context) (string, bool) {
-		var msg string
-		var broken bool
-
-		validators := k.GetAllValidators(ctx)
-		for _, validator := range validators {
-
-			valTotalDelShares := validator.GetDelegatorShares()
-
-			totalDelShares := sdk.ZeroDec()
-			delegations := k.GetValidatorDelegations(ctx, validator.GetOperator())
-			for _, delegation := range delegations {
-				totalDelShares = totalDelShares.Add(delegation.Shares)
-			}
-
-			if !valTotalDelShares.Equal(totalDelShares) {
-				broken = true
-				msg += fmt.Sprintf("broken delegator shares invariance:\n"+
-					"\tvalidator.DelegatorShares: %v\n"+
-					"\tsum of Delegator.Shares: %v\n", valTotalDelShares, totalDelShares)
-			}
-		}
-		return sdk.FormatInvariant(types.ModuleName, "delegator shares", msg), broken
-	}
-}
+// func DelegatorSharesInvariant(k Keeper) sdk.Invariant {
+// 	return func(ctx sdk.Context) (string, bool) {
+// 		var msg string
+// 		var broken bool
+//
+// 		validators := k.GetAllValidators(ctx)
+// 		for _, validator := range validators {
+//
+// 			valTotalDelShares := validator.GetDelegatorShares()
+//
+// 			totalDelShares := sdk.ZeroDec()
+// 			delegations := k.GetValidatorDelegations(ctx, validator.GetOperator()) -- // this can use the supply module
+// 			for _, delegation := range delegations {
+// 				totalDelShares = totalDelShares.Add(delegation.Shares)
+// 			}
+//
+// 			if !valTotalDelShares.Equal(totalDelShares) {
+// 				broken = true
+// 				msg += fmt.Sprintf("broken delegator shares invariance:\n"+
+// 					"\tvalidator.DelegatorShares: %v\n"+
+// 					"\tsum of Delegator.Shares: %v\n", valTotalDelShares, totalDelShares)
+// 			}
+// 		}
+// 		return sdk.FormatInvariant(types.ModuleName, "delegator shares", msg), broken
+// 	}
+// }

@@ -101,27 +101,27 @@ func queryValidator(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, s
 	return res, nil
 }
 
-func queryValidatorDelegations(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
-	var params types.QueryValidatorParams
-
-	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
-	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
-	}
-
-	delegations := k.GetValidatorDelegations(ctx, params.ValidatorAddr)
-	delegationResps, err := delegationsToDelegationResponses(ctx, k, delegations)
-	if err != nil {
-		return nil, sdk.ErrInternal(err.Error())
-	}
-
-	res, err := codec.MarshalJSONIndent(types.ModuleCdc, delegationResps)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to marshal result to JSON", err.Error()))
-	}
-
-	return res, nil
-}
+// func queryValidatorDelegations(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
+// 	var params types.QueryValidatorParams
+//
+// 	err := types.ModuleCdc.UnmarshalJSON(req.Data, &params)
+// 	if err != nil {
+// 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+// 	}
+//
+// 	delegations := k.GetValidatorDelegations(ctx, params.ValidatorAddr)
+// 	delegationResps, err := delegationsToDelegationResponses(ctx, k, delegations)
+// 	if err != nil {
+// 		return nil, sdk.ErrInternal(err.Error())
+// 	}
+//
+// 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, delegationResps)
+// 	if err != nil {
+// 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("failed to marshal result to JSON", err.Error()))
+// 	}
+//
+// 	return res, nil
+// } // check supply for delegation vouchers
 
 func queryValidatorUnbondingDelegations(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
 	var params types.QueryValidatorParams
