@@ -518,9 +518,10 @@ func (v Validator) AddSharesFromDel(amount sdk.Int) (Validator, sdk.Dec) {
 // CONTRACT: Tokens are assumed to have come from not-bonded pool.
 func (v Validator) AddTokensFromDel(amount sdk.Int) (Validator, sdk.Dec) {
 
+	v, sharesIssues := v.AddSharesFromDel(amount)
 	v.Tokens = v.Tokens.Add(amount)
+	return v, sharesIssues
 
-	return v, amount.ToDec()
 }
 
 // RemoveTokens removes tokens from a validator
