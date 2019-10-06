@@ -13,30 +13,27 @@ import (
 )
 
 const (
-	DefaultParamspace                = keeper.DefaultParamspace
-	DefaultCodespace                 = types.DefaultCodespace
-	CodeInvalidInput                 = types.CodeInvalidInput
-	CodeNoDistributionInfo           = types.CodeNoDistributionInfo
-	CodeNoValidatorCommission        = types.CodeNoValidatorCommission
-	CodeSetWithdrawAddrDisabled      = types.CodeSetWithdrawAddrDisabled
-	ModuleName                       = types.ModuleName
-	StoreKey                         = types.StoreKey
-	RouterKey                        = types.RouterKey
-	QuerierRoute                     = types.QuerierRoute
-	ProposalTypeCommunityPoolSpend   = types.ProposalTypeCommunityPoolSpend
-	QueryParams                      = types.QueryParams
-	QueryValidatorOutstandingRewards = types.QueryValidatorOutstandingRewards
-	QueryValidatorCommission         = types.QueryValidatorCommission
-	QueryValidatorSlashes            = types.QueryValidatorSlashes
-	QueryDelegationRewards           = types.QueryDelegationRewards
-	QueryDelegatorTotalRewards       = types.QueryDelegatorTotalRewards
-	QueryDelegatorValidators         = types.QueryDelegatorValidators
-	QueryWithdrawAddr                = types.QueryWithdrawAddr
-	QueryCommunityPool               = types.QueryCommunityPool
-	ParamCommunityTax                = types.ParamCommunityTax
-	ParamBaseProposerReward          = types.ParamBaseProposerReward
-	ParamBonusProposerReward         = types.ParamBonusProposerReward
-	ParamWithdrawAddrEnabled         = types.ParamWithdrawAddrEnabled
+	DefaultParamspace              = keeper.DefaultParamspace
+	DefaultCodespace               = types.DefaultCodespace
+	CodeInvalidInput               = types.CodeInvalidInput
+	CodeNoDistributionInfo         = types.CodeNoDistributionInfo
+	CodeNoValidatorCommission      = types.CodeNoValidatorCommission
+	CodeSetWithdrawAddrDisabled    = types.CodeSetWithdrawAddrDisabled
+	ModuleName                     = types.ModuleName
+	StoreKey                       = types.StoreKey
+	RouterKey                      = types.RouterKey
+	QuerierRoute                   = types.QuerierRoute
+	ProposalTypeCommunityPoolSpend = types.ProposalTypeCommunityPoolSpend
+	QueryParams                    = types.QueryParams
+	QueryValidatorCommission       = types.QueryValidatorCommission
+	QueryValidatorSlashes          = types.QueryValidatorSlashes
+	QueryDelegatorValidators       = types.QueryDelegatorValidators
+	QueryWithdrawAddr              = types.QueryWithdrawAddr
+	QueryCommunityPool             = types.QueryCommunityPool
+	ParamCommunityTax              = types.ParamCommunityTax
+	ParamBaseProposerReward        = types.ParamBaseProposerReward
+	ParamBonusProposerReward       = types.ParamBonusProposerReward
+	ParamWithdrawAddrEnabled       = types.ParamWithdrawAddrEnabled
 )
 
 var (

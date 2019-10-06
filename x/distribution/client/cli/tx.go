@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -17,15 +16,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 
-	"github.com/cosmos/cosmos-sdk/x/distribution/client/common"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 )
 
 var (
-	flagOnlyFromValidator = "only-from-validator"
-	flagIsValidator       = "is-validator"
-	flagComission         = "commission"
-	flagMaxMessagesPerTx  = "max-msgs"
+	flagMaxMessagesPerTx = "max-msgs"
 )
 
 const (
@@ -43,9 +38,8 @@ func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	}
 
 	distTxCmd.AddCommand(client.PostCommands(
-		GetCmdWithdrawRewards(cdc),
+		GetCmdWithdrawCommission(cdc),
 		GetCmdSetWithdrawAddr(cdc),
-		GetCmdWithdrawAllRewards(cdc, storeKey),
 	)...)
 
 	return distTxCmd
@@ -84,82 +78,32 @@ func splitAndApply(
 }
 
 // command to withdraw rewards
-func GetCmdWithdrawRewards(cdc *codec.Codec) *cobra.Command {
+func GetCmdWithdrawCommission(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw-rewards [validator-addr]",
-		Short: "Withdraw rewards from a given delegation address, and optionally withdraw validator commission if the delegation address given is a validator operator",
+		Use:   "withdraw-commission",
+		Short: "Withdraw commission for the given validator",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Withdraw rewards from a given delegation address,
-and optionally withdraw validator commission if the delegation address given is a validator operator.
+			fmt.Sprintf(`Withdraw rewards for the given validator.
 
 Example:
-$ %s tx distr withdraw-rewards cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --from mykey
-$ %s tx distr withdraw-rewards cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj --from mykey --commission
-`,
-				version.ClientName, version.ClientName,
-			),
-		),
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			delAddr := cliCtx.GetFromAddress()
-			valAddr, err := sdk.ValAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
-			msgs := []sdk.Msg{types.NewMsgWithdrawDelegatorReward(delAddr, valAddr)}
-			if viper.GetBool(flagComission) {
-				msgs = append(msgs, types.NewMsgWithdrawValidatorCommission(valAddr))
-			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, msgs)
-		},
-	}
-	cmd.Flags().Bool(flagComission, false, "also withdraw validator's commission")
-	return cmd
-}
-
-// command to withdraw all rewards
-func GetCmdWithdrawAllRewards(cdc *codec.Codec, queryRoute string) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "withdraw-all-rewards",
-		Short: "withdraw all delegations rewards for a delegator",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Withdraw all rewards for a single delegator.
-
-Example:
-$ %s tx distr withdraw-all-rewards --from mykey
+$ %s tx distr withdraw-commission --from mykey
 `,
 				version.ClientName,
 			),
 		),
-		Args: cobra.NoArgs,
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			delAddr := cliCtx.GetFromAddress()
+			valAddr := sdk.ValAddress(delAddr)
 
-			// The transaction cannot be generated offline since it requires a query
-			// to get all the validators.
-			if cliCtx.GenerateOnly {
-				return fmt.Errorf("command disabled with the provided flag: %s", client.FlagGenerateOnly)
-			}
+			msgs := []sdk.Msg{types.NewMsgWithdrawValidatorCommission(valAddr)}
 
-			msgs, err := common.WithdrawAllDelegatorRewards(cliCtx, queryRoute, delAddr)
-			if err != nil {
-				return err
-			}
-
-			chunkSize := viper.GetInt(flagMaxMessagesPerTx)
-			return splitAndApply(utils.GenerateOrBroadcastMsgs, cliCtx, txBldr, msgs, chunkSize)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, msgs)
 		},
 	}
-
-	cmd.Flags().Int(flagMaxMessagesPerTx, MaxMessagesPerTxDefault, "Limit the number of messages per tx (0 for unlimited)")
 	return cmd
 }
 
