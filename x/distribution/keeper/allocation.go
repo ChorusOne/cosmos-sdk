@@ -101,9 +101,14 @@ func (k Keeper) AllocateTokens(
 
 // AllocateTokensToValidator allocate tokens to a particular validator, splitting according to commission
 func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val exported.ValidatorI, tokens sdk.DecCoins) {
-	// split tokens between validator and delegators according to commission
-	commission := tokens.MulDec(val.GetCommission())
-	shared := tokens.Sub(commission)
+	// handle commission properly, then bond everything to the requisite validator!
+	// split tokens into bondDenomTokens and nonBondDenomTokens
+	bondDenomTokens := tokens.Intersect(sdk.DecCoins{{k.stakingKeeper.GetParams(ctx).BondDenom, sdk.OneDec()}})
+	nonBondDenomTokens := tokens.Except(sdk.DecCoins{{k.stakingKeeper.GetParams(ctx).BondDenom, sdk.OneDec()}})
+
+	commission := bondDenomTokens.MulDec(val.GetCommission())
+	// nonBondDenomTokens commission handled post-auction
+	shared := bondDenomTokens.Sub(commission)
 
 	// update current commission
 	ctx.EventManager().EmitEvent(
@@ -117,20 +122,29 @@ func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val exported.Validato
 	currentCommission = currentCommission.Add(commission)
 	k.SetValidatorAccumulatedCommission(ctx, val.GetOperator(), currentCommission)
 
-	// update current rewards
-	currentRewards := k.GetValidatorCurrentRewards(ctx, val.GetOperator())
-	currentRewards.Rewards = currentRewards.Rewards.Add(shared)
-	k.SetValidatorCurrentRewards(ctx, val.GetOperator(), currentRewards)
+	if _, ok := val.(staking.Validator); ok {
+		// huge massive caveat; at this point in time, we ignore any non baseDenom tokens.
+		// TODO: don't do this, it sucks.
+		k.stakingKeeper.AddValidatorTokens(ctx, staking.ValidatorFromSdkValidator(val), shared.AmountOf(k.stakingKeeper.GetParams(ctx).BondDenom).TruncateInt())
+		k.stakingKeeper.AddFeesToAuctionPool(ctx, staking.ValidatorFromSdkValidator(val), nonBondDenomTokens)
+	} else {
+		fmt.Println("Well this is shit...")
+	}
 
-	// update outstanding rewards
+	// update outstanding rewards - we need to do something funky here.
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRewards,
-			sdk.NewAttribute(sdk.AttributeKeyAmount, tokens.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, shared.AmountOf(k.stakingKeeper.GetParams(ctx).BondDenom).TruncateInt().String()),
 			sdk.NewAttribute(types.AttributeKeyValidator, val.GetOperator().String()),
 		),
 	)
-	outstanding := k.GetValidatorOutstandingRewards(ctx, val.GetOperator())
-	outstanding = outstanding.Add(tokens)
-	k.SetValidatorOutstandingRewards(ctx, val.GetOperator(), outstanding)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeNonDenomRewards,
+			sdk.NewAttribute(sdk.AttributeKeyAmount, nonBondDenomTokens.String()),
+			sdk.NewAttribute(types.AttributeKeyValidator, val.GetOperator().String()),
+		),
+	)
 }

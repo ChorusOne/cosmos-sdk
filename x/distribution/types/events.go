@@ -4,8 +4,8 @@ package types
 var (
 	EventTypeSetWithdrawAddress = "set_withdraw_address"
 	EventTypeRewards            = "rewards"
+	EventTypeNonDenomRewards    = "non_denom_rewards"
 	EventTypeCommission         = "commission"
-	EventTypeWithdrawRewards    = "withdraw_rewards"
 	EventTypeWithdrawCommission = "withdraw_commission"
 	EventTypeProposerReward     = "proposer_reward"
 
