@@ -108,8 +108,8 @@ func CreateTestInput(t *testing.T, isCheckTx bool, initPower int64) (sdk.Context
 	cdc := MakeTestCodec()
 
 	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
-	notBondedPool := supply.NewEmptyModuleAccount(types.NotBondedPoolName, supply.Burner, supply.Staking)
-	bondPool := supply.NewEmptyModuleAccount(types.BondedPoolName, supply.Burner, supply.Staking)
+	notBondedPool := supply.NewEmptyModuleAccount(types.NotBondedPoolName, supply.Burner, supply.Staking, supply.Minter)
+	bondPool := supply.NewEmptyModuleAccount(types.BondedPoolName, supply.Burner, supply.Staking, supply.Minter)
 
 	blacklistedAddrs := make(map[string]bool)
 	blacklistedAddrs[feeCollectorAcc.String()] = true
@@ -145,7 +145,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, initPower int64) (sdk.Context
 
 	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
 
-	keeper := NewKeeper(cdc, keyStaking, tkeyStaking, supplyKeeper, bankKeeper, pk.Subspace(DefaultParamspace), types.DefaultCodespace)
+	keeper := NewKeeper(cdc, keyStaking, tkeyStaking, supplyKeeper, bk, pk.Subspace(DefaultParamspace), types.DefaultCodespace)
 	keeper.SetParams(ctx, types.DefaultParams())
 
 	// set module accounts

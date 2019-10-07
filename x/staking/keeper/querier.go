@@ -20,8 +20,6 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryValidators(ctx, req, k)
 		case types.QueryValidator:
 			return queryValidator(ctx, req, k)
-		case types.QueryValidatorDelegations:
-			return queryValidatorDelegations(ctx, req, k)
 		case types.QueryValidatorUnbondingDelegations:
 			return queryValidatorUnbondingDelegations(ctx, req, k)
 		case types.QueryDelegation:

@@ -240,15 +240,15 @@ func NewRedelegation(delegatorAddr sdk.AccAddress, validatorSrcAddr,
 	minTime time.Time, balance sdk.Int,
 	sharesDst sdk.Dec) Redelegation {
 
-	entry := NewRedelegationEntry(creationHeight,
-		minTime, balance, sharesDst)
-
-	return Redelegation{
+	red := Redelegation{
 		DelegatorAddress:    delegatorAddr,
 		ValidatorSrcAddress: validatorSrcAddr,
 		ValidatorDstAddress: validatorDstAddr,
-		Entries:             []RedelegationEntry{entry},
+		Entries:             []RedelegationEntry{},
 	}
+
+	red.AddEntry(creationHeight, minTime, balance, sharesDst)
+	return red
 }
 
 // NewRedelegation - create a new redelegation object

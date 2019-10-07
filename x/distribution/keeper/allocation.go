@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
+	staking "github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 )
 
@@ -103,8 +104,8 @@ func (k Keeper) AllocateTokens(
 func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val exported.ValidatorI, tokens sdk.DecCoins) {
 	// handle commission properly, then bond everything to the requisite validator!
 	// split tokens into bondDenomTokens and nonBondDenomTokens
-	bondDenomTokens := tokens.Intersect(sdk.DecCoins{{k.stakingKeeper.GetParams(ctx).BondDenom, sdk.OneDec()}})
-	nonBondDenomTokens := tokens.Except(sdk.DecCoins{{k.stakingKeeper.GetParams(ctx).BondDenom, sdk.OneDec()}})
+	bondDenomTokens := tokens.Intersect(sdk.DecCoins{{k.stakingKeeper.BondDenom(ctx), sdk.OneDec()}})
+	nonBondDenomTokens := tokens.Except(sdk.DecCoins{{k.stakingKeeper.BondDenom(ctx), sdk.OneDec()}})
 
 	commission := bondDenomTokens.MulDec(val.GetCommission())
 	// nonBondDenomTokens commission handled post-auction
@@ -125,7 +126,7 @@ func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val exported.Validato
 	if _, ok := val.(staking.Validator); ok {
 		// huge massive caveat; at this point in time, we ignore any non baseDenom tokens.
 		// TODO: don't do this, it sucks.
-		k.stakingKeeper.AddValidatorTokens(ctx, staking.ValidatorFromSdkValidator(val), shared.AmountOf(k.stakingKeeper.GetParams(ctx).BondDenom).TruncateInt())
+		k.stakingKeeper.AddValidatorTokens(ctx, staking.ValidatorFromSdkValidator(val), shared.AmountOf(k.stakingKeeper.BondDenom(ctx)).TruncateInt())
 		k.stakingKeeper.AddFeesToAuctionPool(ctx, staking.ValidatorFromSdkValidator(val), nonBondDenomTokens)
 	} else {
 		fmt.Println("Well this is shit...")
@@ -135,7 +136,7 @@ func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val exported.Validato
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRewards,
-			sdk.NewAttribute(sdk.AttributeKeyAmount, shared.AmountOf(k.stakingKeeper.GetParams(ctx).BondDenom).TruncateInt().String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, shared.AmountOf(k.stakingKeeper.BondDenom(ctx)).TruncateInt().String()),
 			sdk.NewAttribute(types.AttributeKeyValidator, val.GetOperator().String()),
 		),
 	)

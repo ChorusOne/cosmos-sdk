@@ -103,7 +103,6 @@ func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeigh
 	// cannot decrease balance below zero
 	tokensToBurn := sdk.MinInt(remainingSlashAmount, validator.Tokens)
 	tokensToBurn = sdk.MaxInt(tokensToBurn, sdk.ZeroInt()) // defensive.
-
 	// we need to calculate the *effective* slash fraction for distribution
 	if validator.Tokens.GT(sdk.ZeroInt()) {
 		effectiveFraction := tokensToBurn.ToDec().QuoRoundUp(validator.Tokens.ToDec())

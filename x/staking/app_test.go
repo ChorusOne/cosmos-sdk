@@ -42,7 +42,7 @@ func getMockApp(t *testing.T) (*mock.App, Keeper) {
 		types.BondedPoolName:    []string{supply.Burner, supply.Staking},
 	}
 	supplyKeeper := supply.NewKeeper(mApp.Cdc, keySupply, mApp.AccountKeeper, bankKeeper, maccPerms)
-	keeper := NewKeeper(mApp.Cdc, keyStaking, tkeyStaking, supplyKeeper, mApp.ParamsKeeper.Subspace(DefaultParamspace), DefaultCodespace)
+	keeper := NewKeeper(mApp.Cdc, keyStaking, tkeyStaking, supplyKeeper, bankKeeper, mApp.ParamsKeeper.Subspace(DefaultParamspace), DefaultCodespace)
 
 	mApp.Router().AddRoute(RouterKey, NewHandler(keeper))
 	mApp.SetEndBlocker(getEndBlocker(keeper))
@@ -138,7 +138,7 @@ func TestStakingMsgs(t *testing.T) {
 	// create validator
 	description := NewDescription("foo_moniker", "", "", "")
 	createValidatorMsg := NewMsgCreateValidator(
-		sdk.ValAddress(addr1), priv1.PubKey(), bondCoin, description, commissionRates, sdk.OneInt(),
+		sdk.ValAddress(addr1), priv1.PubKey(), bondCoin, description, commissionRates, sdk.OneInt(), "test",
 	)
 
 	header := abci.Header{Height: mApp.LastBlockHeight() + 1}

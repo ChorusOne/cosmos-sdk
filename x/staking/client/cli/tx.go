@@ -356,6 +356,7 @@ func BuildCreateValidatorMsg(cliCtx context.CLIContext, txBldr auth.TxBuilder) (
 	rateStr := viper.GetString(FlagCommissionRate)
 	maxRateStr := viper.GetString(FlagCommissionMaxRate)
 	maxChangeRateStr := viper.GetString(FlagCommissionMaxChangeRate)
+	sharesDenomPrefix := viper.GetString(FlagSharesDenomPrefix)
 	commissionRates, err := buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr)
 	if err != nil {
 		return txBldr, nil, err
@@ -369,7 +370,7 @@ func BuildCreateValidatorMsg(cliCtx context.CLIContext, txBldr auth.TxBuilder) (
 	}
 
 	msg := types.NewMsgCreateValidator(
-		sdk.ValAddress(valAddr), pk, amount, description, commissionRates, minSelfDelegation,
+		sdk.ValAddress(valAddr), pk, amount, description, commissionRates, minSelfDelegation, sharesDenomPrefix,
 	)
 
 	if viper.GetBool(client.FlagGenerateOnly) {

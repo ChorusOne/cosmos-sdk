@@ -28,7 +28,7 @@ type StakingKeeper interface {
 	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec)
 	Jail(sdk.Context, sdk.ConsAddress)   // jail a validator
 	Unjail(sdk.Context, sdk.ConsAddress) // unjail a validator
-
+	BondDenom(sdk.Context) string
 	// Delegation allows for getting a particular delegation for a given validator
 	// and delegator outside the scope of the staking module.
 	Delegation(sdk.Context, sdk.AccAddress, sdk.ValAddress) stakingexported.DelegationI

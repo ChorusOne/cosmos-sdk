@@ -1,32 +1,29 @@
 package keeper
 
 import (
+	"fmt"
+	"math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking/exported"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // Return all validators that a delegator is bonded to. If maxRetrieve is supplied, the respective amount will be returned.
 func (k Keeper) GetDelegatorValidators(ctx sdk.Context, delegatorAddr sdk.AccAddress,
 	maxRetrieve uint16) (validators []types.Validator) {
-	validators = make([]types.Validator, maxRetrieve)
+	validators = []types.Validator{}
 
-	store := ctx.KVStore(k.storeKey)
-	delegatorPrefixKey := types.GetDelegationsKey(delegatorAddr)
-	iterator := sdk.KVStorePrefixIterator(store, delegatorPrefixKey) // smallest to largest
-	defer iterator.Close()
-
-	i := 0
-	for ; iterator.Valid() && i < int(maxRetrieve); iterator.Next() {
-		delegation := types.MustUnmarshalDelegation(k.cdc, iterator.Value())
-
-		validator, found := k.GetValidator(ctx, delegation.ValidatorAddress)
-		if !found {
-			panic(types.ErrNoValidatorFound(types.DefaultCodespace))
+	// iterate over validators
+	k.IterateValidators(ctx, func(index int64, validator exported.ValidatorI) (stop bool) {
+		denom := fmt.Sprintf("%s%s", validator.GetSharesDenomPrefix(), k.BondDenom(ctx))
+		coins := k.bankKeeper.GetCoins(ctx, delegatorAddr)
+		if coins.AmountOf(denom).GT(sdk.ZeroInt()) {
+			validators = append(validators, validator.(types.Validator))
 		}
-		validators[i] = validator
-		i++
-	}
-	return validators[:i] // trim
+		return false
+	})
+	return validators[:int(math.Min(float64(len(validators)), float64(maxRetrieve)))] // trim if the array length < maxRetrieve
 }
 
 // return a validator that a delegator is bonded to
@@ -49,21 +46,7 @@ func (k Keeper) GetDelegatorValidator(ctx sdk.Context, delegatorAddr sdk.AccAddr
 
 // return all delegations for a delegator
 func (k Keeper) GetAllDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddress) []types.Delegation {
-	delegations := make([]types.Delegation, 0)
-
-	store := ctx.KVStore(k.storeKey)
-	delegatorPrefixKey := types.GetDelegationsKey(delegator)
-	iterator := sdk.KVStorePrefixIterator(store, delegatorPrefixKey) //smallest to largest
-	defer iterator.Close()
-
-	i := 0
-	for ; iterator.Valid(); iterator.Next() {
-		delegation := types.MustUnmarshalDelegation(k.cdc, iterator.Value())
-		delegations = append(delegations, delegation)
-		i++
-	}
-
-	return delegations
+	return k.GetDelegatorDelegations(ctx, delegator, math.MaxInt16)
 }
 
 // return all unbonding-delegations for a delegator

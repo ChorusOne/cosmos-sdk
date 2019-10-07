@@ -140,7 +140,7 @@ func CreateTestInputAdvanced(t *testing.T, isCheckTx bool, initPower int64,
 	}
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
 
-	sk := staking.NewKeeper(cdc, keyStaking, tkeyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
+	sk := staking.NewKeeper(cdc, keyStaking, tkeyStaking, supplyKeeper, bankKeeper, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
 	sk.SetParams(ctx, staking.DefaultParams())
 
 	keeper := NewKeeper(cdc, keyDistr, pk.Subspace(DefaultParamspace), sk, supplyKeeper, types.DefaultCodespace, auth.FeeCollectorName, blacklistedAddrs)

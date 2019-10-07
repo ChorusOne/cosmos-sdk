@@ -1293,13 +1293,13 @@ func TestInvalidCoinDenom(t *testing.T) {
 
 	commission := types.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.ZeroDec())
 
-	msgCreate := types.NewMsgCreateValidator(valA, keep.PKs[0], invalidCoin, Description{}, commission, sdk.OneInt())
+	msgCreate := types.NewMsgCreateValidator(valA, keep.PKs[0], invalidCoin, Description{}, commission, sdk.OneInt(), "test1")
 	got := handleMsgCreateValidator(ctx, msgCreate, keeper)
 	require.False(t, got.IsOK())
-	msgCreate = types.NewMsgCreateValidator(valA, keep.PKs[0], validCoin, Description{}, commission, sdk.OneInt())
+	msgCreate = types.NewMsgCreateValidator(valA, keep.PKs[0], validCoin, Description{}, commission, sdk.OneInt(), "test2")
 	got = handleMsgCreateValidator(ctx, msgCreate, keeper)
 	require.True(t, got.IsOK())
-	msgCreate = types.NewMsgCreateValidator(valB, keep.PKs[1], validCoin, Description{}, commission, sdk.OneInt())
+	msgCreate = types.NewMsgCreateValidator(valB, keep.PKs[1], validCoin, Description{}, commission, sdk.OneInt(), "test3")
 	got = handleMsgCreateValidator(ctx, msgCreate, keeper)
 	require.True(t, got.IsOK())
 

@@ -27,21 +27,22 @@ func TestMsgCreateValidator(t *testing.T) {
 		pubkey                                    crypto.PubKey
 		bond                                      sdk.Coin
 		expectPass                                bool
+		ShareTokenDenom                           string
 	}{
-		{"basic good", "a", "b", "c", "d", commission1, sdk.OneInt(), valAddr1, pk1, coinPos, true},
-		{"partial description", "", "", "c", "", commission1, sdk.OneInt(), valAddr1, pk1, coinPos, true},
-		{"empty description", "", "", "", "", commission2, sdk.OneInt(), valAddr1, pk1, coinPos, false},
-		{"empty address", "a", "b", "c", "d", commission2, sdk.OneInt(), emptyAddr, pk1, coinPos, false},
-		{"empty pubkey", "a", "b", "c", "d", commission1, sdk.OneInt(), valAddr1, emptyPubkey, coinPos, true},
-		{"empty bond", "a", "b", "c", "d", commission2, sdk.OneInt(), valAddr1, pk1, coinZero, false},
-		{"zero min self delegation", "a", "b", "c", "d", commission1, sdk.ZeroInt(), valAddr1, pk1, coinPos, false},
-		{"negative min self delegation", "a", "b", "c", "d", commission1, sdk.NewInt(-1), valAddr1, pk1, coinPos, false},
-		{"delegation less than min self delegation", "a", "b", "c", "d", commission1, coinPos.Amount.Add(sdk.OneInt()), valAddr1, pk1, coinPos, false},
+		{"basic good", "a", "b", "c", "d", commission1, sdk.OneInt(), valAddr1, pk1, coinPos, true, "TEST"},
+		{"partial description", "", "", "c", "", commission1, sdk.OneInt(), valAddr1, pk1, coinPos, true, "TEST"},
+		{"empty description", "", "", "", "", commission2, sdk.OneInt(), valAddr1, pk1, coinPos, false, "TEST"},
+		{"empty address", "a", "b", "c", "d", commission2, sdk.OneInt(), emptyAddr, pk1, coinPos, false, "TEST"},
+		{"empty pubkey", "a", "b", "c", "d", commission1, sdk.OneInt(), valAddr1, emptyPubkey, coinPos, true, "TEST"},
+		{"empty bond", "a", "b", "c", "d", commission2, sdk.OneInt(), valAddr1, pk1, coinZero, false, "TEST"},
+		{"zero min self delegation", "a", "b", "c", "d", commission1, sdk.ZeroInt(), valAddr1, pk1, coinPos, false, "TEST"},
+		{"negative min self delegation", "a", "b", "c", "d", commission1, sdk.NewInt(-1), valAddr1, pk1, coinPos, false, "TEST"},
+		{"delegation less than min self delegation", "a", "b", "c", "d", commission1, coinPos.Amount.Add(sdk.OneInt()), valAddr1, pk1, coinPos, false, "TEST"},
 	}
 
 	for _, tc := range tests {
 		description := NewDescription(tc.moniker, tc.identity, tc.website, tc.details)
-		msg := NewMsgCreateValidator(tc.validatorAddr, tc.pubkey, tc.bond, description, tc.CommissionRates, tc.minSelfDelegation)
+		msg := NewMsgCreateValidator(tc.validatorAddr, tc.pubkey, tc.bond, description, tc.CommissionRates, tc.minSelfDelegation, tc.ShareTokenDenom)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {

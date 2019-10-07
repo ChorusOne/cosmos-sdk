@@ -54,8 +54,8 @@ func getMockApp(t *testing.T, numGenAccs int, genState GenesisState, genAccs []a
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 
 	govAcc := supply.NewEmptyModuleAccount(types.ModuleName, supply.Burner)
-	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
-	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking)
+	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking, supply.Minter)
+	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking, supply.Minter)
 
 	blacklistedAddrs := make(map[string]bool)
 	blacklistedAddrs[govAcc.String()] = true
@@ -75,7 +75,7 @@ func getMockApp(t *testing.T, numGenAccs int, genState GenesisState, genAccs []a
 		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
 	}
 	supplyKeeper := supply.NewKeeper(mApp.Cdc, keySupply, mApp.AccountKeeper, bk, maccPerms)
-	sk := staking.NewKeeper(mApp.Cdc, keyStaking, tKeyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
+	sk := staking.NewKeeper(mApp.Cdc, keyStaking, tKeyStaking, supplyKeeper, bk, pk.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
 
 	keeper := NewKeeper(mApp.Cdc, keyGov, pk, pk.Subspace(DefaultParamspace), supplyKeeper, sk, DefaultCodespace, rtr)
 
@@ -233,7 +233,7 @@ func createValidators(t *testing.T, stakingHandler sdk.Handler, ctx sdk.Context,
 		valTokens := sdk.TokensFromConsensusPower(powerAmt[i])
 		valCreateMsg := staking.NewMsgCreateValidator(
 			addrs[i], pubkeys[i], sdk.NewCoin(sdk.DefaultBondDenom, valTokens),
-			testDescription, testCommissionRates, sdk.OneInt(),
+			testDescription, testCommissionRates, sdk.OneInt(), fmt.Sprintf("test%d", i),
 		)
 
 		res := stakingHandler(ctx, valCreateMsg)

@@ -29,6 +29,7 @@ type MsgCreateValidator struct {
 	ValidatorAddress  sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
 	PubKey            crypto.PubKey   `json:"pubkey" yaml:"pubkey"`
 	Value             sdk.Coin        `json:"value" yaml:"value"`
+	ShareTokenDenom   string          `json:"share_token_denom"`
 }
 
 type msgCreateValidatorJSON struct {
@@ -39,12 +40,13 @@ type msgCreateValidatorJSON struct {
 	ValidatorAddress  sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
 	PubKey            string          `json:"pubkey" yaml:"pubkey"`
 	Value             sdk.Coin        `json:"value" yaml:"value"`
+	ShareTokenDenom   string          `json:"share_token_denom"`
 }
 
 // Default way to create validator. Delegator address and validator address are the same
 func NewMsgCreateValidator(
 	valAddr sdk.ValAddress, pubKey crypto.PubKey, selfDelegation sdk.Coin,
-	description Description, commission CommissionRates, minSelfDelegation sdk.Int,
+	description Description, commission CommissionRates, minSelfDelegation sdk.Int, shareTokenDenom string,
 ) MsgCreateValidator {
 
 	return MsgCreateValidator{
@@ -55,6 +57,7 @@ func NewMsgCreateValidator(
 		Value:             selfDelegation,
 		Commission:        commission,
 		MinSelfDelegation: minSelfDelegation,
+		ShareTokenDenom:   shareTokenDenom,
 	}
 }
 
@@ -108,7 +111,7 @@ func (msg *MsgCreateValidator) UnmarshalJSON(bz []byte) error {
 	}
 	msg.Value = msgCreateValJSON.Value
 	msg.MinSelfDelegation = msgCreateValJSON.MinSelfDelegation
-
+	msg.ShareTokenDenom = msgCreateValJSON.ShareTokenDenom
 	return nil
 }
 

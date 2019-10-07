@@ -15,6 +15,7 @@ const (
 	FlagAmount              = "amount"
 	FlagSharesAmount        = "shares-amount"
 	FlagSharesFraction      = "shares-fraction"
+	FlagSharesDenomPrefix   = "validator-voucher-prefix"
 
 	FlagMoniker  = "moniker"
 	FlagIdentity = "identity"

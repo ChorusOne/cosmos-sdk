@@ -52,7 +52,7 @@ func getMockApp(t *testing.T) (*mock.App, staking.Keeper, Keeper) {
 		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
 	}
 	supplyKeeper := supply.NewKeeper(mapp.Cdc, keySupply, mapp.AccountKeeper, bankKeeper, maccPerms)
-	stakingKeeper := staking.NewKeeper(mapp.Cdc, keyStaking, tkeyStaking, supplyKeeper, mapp.ParamsKeeper.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
+	stakingKeeper := staking.NewKeeper(mapp.Cdc, keyStaking, tkeyStaking, supplyKeeper, bankKeeper, mapp.ParamsKeeper.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
 	keeper := NewKeeper(mapp.Cdc, keySlashing, stakingKeeper, mapp.ParamsKeeper.Subspace(DefaultParamspace), DefaultCodespace)
 	mapp.Router().AddRoute(staking.RouterKey, staking.NewHandler(stakingKeeper))
 	mapp.Router().AddRoute(RouterKey, NewHandler(keeper))
@@ -129,7 +129,7 @@ func TestSlashingMsgs(t *testing.T) {
 	commission := staking.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 
 	createValidatorMsg := staking.NewMsgCreateValidator(
-		sdk.ValAddress(addr1), priv1.PubKey(), bondCoin, description, commission, sdk.OneInt(),
+		sdk.ValAddress(addr1), priv1.PubKey(), bondCoin, description, commission, sdk.OneInt(), "test",
 	)
 
 	header := abci.Header{Height: mapp.LastBlockHeight() + 1}

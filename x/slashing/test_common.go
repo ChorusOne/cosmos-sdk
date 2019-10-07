@@ -79,8 +79,8 @@ func createTestInput(t *testing.T, defaults Params) (sdk.Context, bank.Keeper, s
 	cdc := createTestCodec()
 
 	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
-	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
-	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking)
+	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking, supply.Minter)
+	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking, supply.Minter)
 
 	blacklistedAddrs := make(map[string]bool)
 	blacklistedAddrs[feeCollectorAcc.String()] = true
@@ -101,7 +101,7 @@ func createTestInput(t *testing.T, defaults Params) (sdk.Context, bank.Keeper, s
 	totalSupply := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, initTokens.MulRaw(int64(len(addrs)))))
 	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
 
-	sk := staking.NewKeeper(cdc, keyStaking, tkeyStaking, supplyKeeper, paramsKeeper.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
+	sk := staking.NewKeeper(cdc, keyStaking, tkeyStaking, supplyKeeper, bk, paramsKeeper.Subspace(staking.DefaultParamspace), staking.DefaultCodespace)
 	genesis := staking.DefaultGenesisState()
 
 	// set module accounts
@@ -145,7 +145,7 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey crypto.PubKey, amt
 	commission := staking.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 	return staking.NewMsgCreateValidator(
 		address, pubKey, sdk.NewCoin(sdk.DefaultBondDenom, amt),
-		staking.Description{}, commission, sdk.OneInt(),
+		staking.Description{}, commission, sdk.OneInt(), "test",
 	)
 }
 

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ func TestDelegation(t *testing.T) {
 	amts := []sdk.Int{sdk.NewInt(9), sdk.NewInt(8), sdk.NewInt(7)}
 	var validators [3]types.Validator
 	for i, amt := range amts {
-		validators[i] = types.NewValidator(addrVals[i], PKs[i], types.Description{})
+		validators[i] = types.NewValidator(addrVals[i], PKs[i], types.Description{}, fmt.Sprintf("test%d", i))
 		validators[i], _ = validators[i].AddTokensFromDel(amt)
 	}
 
@@ -178,7 +179,7 @@ func TestUnbondDelegation(t *testing.T) {
 
 	// create a validator and a delegator to that validator
 	// note this validator starts not-bonded
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	validator, issuedShares := validator.AddTokensFromDel(startTokens)
 	require.Equal(t, startTokens, issuedShares.RoundInt())
@@ -215,7 +216,7 @@ func TestUnbondingDelegationsMaxEntries(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	// create a validator and a delegator to that validator
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	validator, issuedShares := validator.AddTokensFromDel(startTokens)
 	require.Equal(t, startTokens, issuedShares.RoundInt())
@@ -289,7 +290,7 @@ func TestUndelegateSelfDelegationBelowMinSelfDelegation(t *testing.T) {
 	delCoins := sdk.NewCoins(sdk.NewCoin(keeper.BondDenom(ctx), delTokens))
 
 	//create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	validator.MinSelfDelegation = delTokens
 	validator, issuedShares := validator.AddTokensFromDel(delTokens)
@@ -350,7 +351,7 @@ func TestUndelegateFromUnbondingValidator(t *testing.T) {
 	delCoins := sdk.NewCoins(sdk.NewCoin(keeper.BondDenom(ctx), delTokens))
 
 	//create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	validator, issuedShares := validator.AddTokensFromDel(delTokens)
 	require.Equal(t, delTokens, issuedShares.RoundInt())
@@ -444,7 +445,7 @@ func TestUndelegateFromUnbondedValidator(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	// create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	valTokens := sdk.TokensFromConsensusPower(10)
 	validator, issuedShares := validator.AddTokensFromDel(valTokens)
@@ -523,7 +524,7 @@ func TestUnbondingAllDelegationFromValidator(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	//create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	valTokens := sdk.TokensFromConsensusPower(10)
 	validator, issuedShares := validator.AddTokensFromDel(valTokens)
@@ -678,7 +679,7 @@ func TestRedelegateToSameValidator(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	// create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 	validator, issuedShares := validator.AddTokensFromDel(valTokens)
 	require.Equal(t, valTokens, issuedShares.RoundInt())
 	validator = TestingUpdateValidator(keeper, ctx, validator, true)
@@ -705,7 +706,7 @@ func TestRedelegationMaxEntries(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	// create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 	valTokens := sdk.TokensFromConsensusPower(10)
 	validator, issuedShares := validator.AddTokensFromDel(valTokens)
 	require.Equal(t, valTokens, issuedShares.RoundInt())
@@ -715,7 +716,7 @@ func TestRedelegationMaxEntries(t *testing.T) {
 	keeper.SetDelegation(ctx, selfDelegation)
 
 	// create a second validator
-	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{})
+	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{}, "test2")
 	validator2, issuedShares = validator2.AddTokensFromDel(valTokens)
 	require.Equal(t, valTokens, issuedShares.RoundInt())
 
@@ -758,7 +759,7 @@ func TestRedelegateSelfDelegation(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	//create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 	valTokens := sdk.TokensFromConsensusPower(10)
 	validator, issuedShares := validator.AddTokensFromDel(valTokens)
 	require.Equal(t, valTokens, issuedShares.RoundInt())
@@ -770,7 +771,7 @@ func TestRedelegateSelfDelegation(t *testing.T) {
 	keeper.SetDelegation(ctx, selfDelegation)
 
 	// create a second validator
-	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{})
+	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{}, "test2")
 	validator2, issuedShares = validator2.AddTokensFromDel(valTokens)
 	require.Equal(t, valTokens, issuedShares.RoundInt())
 	validator2 = TestingUpdateValidator(keeper, ctx, validator2, true)
@@ -810,7 +811,7 @@ func TestRedelegateFromUnbondingValidator(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	//create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	valTokens := sdk.TokensFromConsensusPower(10)
 	validator, issuedShares := validator.AddTokensFromDel(valTokens)
@@ -830,7 +831,7 @@ func TestRedelegateFromUnbondingValidator(t *testing.T) {
 	keeper.SetDelegation(ctx, delegation)
 
 	// create a second validator
-	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{})
+	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{}, "test2")
 	validator2, issuedShares = validator2.AddTokensFromDel(valTokens)
 	require.Equal(t, valTokens, issuedShares.RoundInt())
 	validator2 = TestingUpdateValidator(keeper, ctx, validator2, true)
@@ -889,7 +890,7 @@ func TestRedelegateFromUnbondedValidator(t *testing.T) {
 	keeper.supplyKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	//create a validator with a self-delegation
-	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{})
+	validator := types.NewValidator(addrVals[0], PKs[0], types.Description{}, "test")
 
 	valTokens := sdk.TokensFromConsensusPower(10)
 	validator, issuedShares := validator.AddTokensFromDel(valTokens)
@@ -909,7 +910,7 @@ func TestRedelegateFromUnbondedValidator(t *testing.T) {
 	keeper.SetDelegation(ctx, delegation)
 
 	// create a second validator
-	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{})
+	validator2 := types.NewValidator(addrVals[1], PKs[1], types.Description{}, "test2")
 	validator2, issuedShares = validator2.AddTokensFromDel(valTokens)
 	require.Equal(t, valTokens, issuedShares.RoundInt())
 	validator2 = TestingUpdateValidator(keeper, ctx, validator2, true)

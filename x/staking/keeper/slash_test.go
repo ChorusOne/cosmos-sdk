@@ -30,7 +30,7 @@ func setupHelper(t *testing.T, power int64) (sdk.Context, Keeper, types.Params) 
 
 	// add numVals validators
 	for i := int64(0); i < numVals; i++ {
-		validator := types.NewValidator(addrVals[i], PKs[i], types.Description{})
+		validator := types.NewValidator(addrVals[i], PKs[i], types.Description{}, "test")
 		validator, _ = validator.AddTokensFromDel(amt)
 		validator = TestingUpdateValidator(keeper, ctx, validator, true)
 		keeper.SetValidatorByConsAddr(ctx, validator)
@@ -420,7 +420,6 @@ func TestSlashWithRedelegation(t *testing.T) {
 	require.True(sdk.IntEq(t, oldBonded.Sub(burnAmount), bondedPool.GetCoins().AmountOf(bondDenom)))
 	require.True(sdk.IntEq(t, oldNotBonded, notBondedPool.GetCoins().AmountOf(bondDenom)))
 	oldBonded = bondedPool.GetCoins().AmountOf(bondDenom)
-
 	// read updating redelegation
 	rd, found = keeper.GetRedelegation(ctx, addrDels[0], addrVals[0], addrVals[1])
 	require.True(t, found)
@@ -435,10 +434,9 @@ func TestSlashWithRedelegation(t *testing.T) {
 	ctx = ctx.WithBlockHeight(12)
 	validator, found = keeper.GetValidatorByConsAddr(ctx, consAddr)
 	require.True(t, found)
-
 	require.NotPanics(t, func() { keeper.Slash(ctx, consAddr, 10, 10, sdk.OneDec()) })
 
-	burnAmount = sdk.TokensFromConsensusPower(10).ToDec().Mul(sdk.OneDec()).TruncateInt()
+	burnAmount = sdk.TokensFromConsensusPower(10).ToDec().TruncateInt()
 	burnAmount = burnAmount.Sub(sdk.OneDec().MulInt(rdTokens).TruncateInt())
 
 	// read updated pool
