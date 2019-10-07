@@ -113,7 +113,7 @@ func (k Keeper) RemoveDelegation(ctx sdk.Context, delegation types.Delegation) {
 
 	sharesDenomName := strings.ToLower(fmt.Sprintf("%s%s", validator.GetSharesDenomPrefix(), k.BondDenom(ctx)))
 
-	vouchers := sdk.NewCoins(sdk.NewCoin(sharesDenomName, delegation.Shares.TruncateInt()))
+	vouchers := sdk.NewCoins(sdk.NewCoin(sharesDenomName, k.bankKeeper.GetCoins(ctx, delegation.DelegatorAddress).AmountOf(sharesDenomName)))
 
 	err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, delegation.DelegatorAddress, sendName, vouchers)
 	if err != nil {
