@@ -444,3 +444,21 @@ func (k Keeper) UnbondAllMatureValidatorQueue(ctx sdk.Context) {
 		store.Delete(validatorTimesliceIterator.Key())
 	}
 }
+
+func (k Keeper) AddValidatorTokens(ctx sdk.Context, validator types.Validator,
+	tokensToAdd sdk.Int) (valOut types.Validator) {
+
+	k.DeleteValidatorByPowerIndex(ctx, validator)
+	validator, _ = validator.AddTokensFromDel(tokensToAdd)
+	// add to bonded tokens?
+
+	k.SetValidator(ctx, validator)
+	k.SetValidatorByPowerIndex(ctx, validator)
+	return validator
+}
+
+func (k Keeper) AddFeesToAuctionPool(ctx sdk.Context, validator types.Validator, coins sdk.DecCoins) types.Validator {
+	validator = validator.AddCoinsToFeePool(coins)
+	k.SetValidator(ctx, validator)
+	return validator
+}
