@@ -748,6 +748,7 @@ func TestRedelegationMaxEntries(t *testing.T) {
 }
 
 func TestRedelegateSelfDelegation(t *testing.T) {
+	println("---------")
 	ctx, _, keeper, _ := CreateTestInput(t, false, 0)
 	startTokens := sdk.TokensFromConsensusPower(30)
 	startCoins := sdk.NewCoins(sdk.NewCoin(keeper.BondDenom(ctx), startTokens))

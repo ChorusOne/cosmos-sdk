@@ -39,7 +39,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 	iterator := sdk.KVStoreReversePrefixIterator(store, types.ValidatorsByPowerIndexKey)
 	defer iterator.Close()
 	for count := 0; iterator.Valid() && count < int(maxValidators); iterator.Next() {
-
+		println(count)
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
 
@@ -82,6 +82,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 
 		// update the validator set if power has changed
 		if !found || !bytes.Equal(oldPowerBytes, newPowerBytes) {
+			fmt.Printf("Update for %d\n", count)
 			updates = append(updates, validator.ABCIValidatorUpdate())
 
 			// set validator power on lookup index
@@ -119,11 +120,11 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 	// Update the pools based on the recent updates in the validator set:
 	// - The tokens from the non-bonded candidates that enter the new validator set need to be transferred
 	// to the Bonded pool.
-	// - The tokens from the bonded validators that are being kicked out from the validator set 
+	// - The tokens from the bonded validators that are being kicked out from the validator set
 	// need to be transferred to the NotBonded pool.
 	switch {
-		// Compare and subtract the respective amounts to only perform one transfer.
-		// This is done in order to avoid doing multiple updates inside each iterator/loop.
+	// Compare and subtract the respective amounts to only perform one transfer.
+	// This is done in order to avoid doing multiple updates inside each iterator/loop.
 	case amtFromNotBondedToBonded.GT(amtFromBondedToNotBonded):
 		k.notBondedTokensToBonded(ctx, amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded))
 	case amtFromNotBondedToBonded.LT(amtFromBondedToNotBonded):
