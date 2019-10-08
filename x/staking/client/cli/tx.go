@@ -334,7 +334,7 @@ func PrepareFlagsForTxCreateValidator(
 	}
 
 	if viper.GetString(FlagSharesDenomPrefix) == "" {
-		viper.Set(FlagSharesDenomPrefix, strings.ToLower(config.Moniker[0:int(math.Max(float64(len(config.Moniker)-1), 6.00))]))
+		viper.Set(FlagSharesDenomPrefix, strings.ToLower(config.Moniker[0:int(math.Min(float64(len(config.Moniker)-1), 6.00))]))
 	}
 }
 
