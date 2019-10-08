@@ -40,7 +40,7 @@ type msgCreateValidatorJSON struct {
 	ValidatorAddress  sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
 	PubKey            string          `json:"pubkey" yaml:"pubkey"`
 	Value             sdk.Coin        `json:"value" yaml:"value"`
-	ShareTokenDenom   string          `json:"goblins"`
+	ShareTokenDenom   string          `json:"share_token_denom"`
 }
 
 // Default way to create validator. Delegator address and validator address are the same
@@ -89,6 +89,7 @@ func (msg MsgCreateValidator) MarshalJSON() ([]byte, error) {
 		PubKey:            sdk.MustBech32ifyConsPub(msg.PubKey),
 		Value:             msg.Value,
 		MinSelfDelegation: msg.MinSelfDelegation,
+		ShareTokenDenom:   msg.ShareTokenDenom,
 	})
 }
 
