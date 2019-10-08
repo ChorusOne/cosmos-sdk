@@ -53,8 +53,8 @@ func GenTxCmd(ctx *server.Context, cdc *codec.Codec, mbm module.BasicManager, sm
 		Args:  cobra.NoArgs,
 		Long: fmt.Sprintf(`This command is an alias of the 'tx create-validator' command'.
 
-		It creates a genesis transaction to create a validator. 
-		The following default parameters are included: 
+		It creates a genesis transaction to create a validator.
+		The following default parameters are included:
 		    %s`, defaultsDesc),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -190,9 +190,7 @@ func GenTxCmd(ctx *server.Context, cdc *codec.Codec, mbm module.BasicManager, sm
 	cmd.Flags().String(client.FlagOutputDocument, "",
 		"write the genesis transaction JSON document to the given file instead of the default location")
 	cmd.Flags().AddFlagSet(fsCreateValidator)
-	cmd.Flags().String(client.FlagSharesDenomPrefix, "", "prefix for the delegation voucher prefix")
 	cmd.MarkFlagRequired(client.FlagName)
-	cmd.MarkFlagRequired(client.FlagSharesDenomPrefix)
 	return cmd
 }
 
