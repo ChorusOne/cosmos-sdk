@@ -366,6 +366,7 @@ func BuildCreateValidatorMsg(cliCtx context.CLIContext, txBldr auth.TxBuilder) (
 	maxRateStr := viper.GetString(FlagCommissionMaxRate)
 	maxChangeRateStr := viper.GetString(FlagCommissionMaxChangeRate)
 	sharesDenomPrefix := viper.GetString(FlagSharesDenomPrefix)
+	fmt.Printf("Denom prefix (369): %s", sharesDenomPrefix)
 	commissionRates, err := buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr)
 	if err != nil {
 		return txBldr, nil, err
