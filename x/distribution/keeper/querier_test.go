@@ -84,32 +84,6 @@ func getQueriedValidatorSlashes(t *testing.T, ctx sdk.Context, cdc *codec.Codec,
 	return
 }
 
-func getQueriedDelegationRewards(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress) (rewards sdk.DecCoins) {
-	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryDelegationRewards}, "/"),
-		Data: cdc.MustMarshalJSON(types.NewQueryDelegationRewardsParams(delegatorAddr, validatorAddr)),
-	}
-
-	bz, err := querier(ctx, []string{types.QueryDelegationRewards}, query)
-	require.Nil(t, err)
-	require.Nil(t, cdc.UnmarshalJSON(bz, &rewards))
-
-	return
-}
-
-func getQueriedDelegatorTotalRewards(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, delegatorAddr sdk.AccAddress) (response types.QueryDelegatorTotalRewardsResponse) {
-	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryDelegatorTotalRewards}, "/"),
-		Data: cdc.MustMarshalJSON(types.NewQueryDelegatorParams(delegatorAddr)),
-	}
-
-	bz, err := querier(ctx, []string{types.QueryDelegatorTotalRewards}, query)
-	require.Nil(t, err)
-	require.Nil(t, cdc.UnmarshalJSON(bz, &response))
-
-	return
-}
-
 func getQueriedCommunityPool(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier) (ptr []byte) {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryCommunityPool}, ""),
@@ -151,10 +125,6 @@ func TestQueries(t *testing.T) {
 	retCommission := getQueriedValidatorCommission(t, ctx, cdc, querier, valOpAddr1)
 	require.Equal(t, commission, retCommission)
 
-	// test delegator's total rewards query
-	delRewards := getQueriedDelegatorTotalRewards(t, ctx, cdc, querier, sdk.AccAddress(valOpAddr1))
-	require.Equal(t, types.QueryDelegatorTotalRewardsResponse{}, delRewards)
-
 	// test validator slashes query with height range
 	slashOne := types.NewValidatorSlashEvent(3, sdk.NewDecWithPrec(5, 1))
 	slashTwo := types.NewValidatorSlashEvent(7, sdk.NewDecWithPrec(6, 1))
@@ -174,24 +144,9 @@ func TestQueries(t *testing.T) {
 		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), staking.Description{}, comm, sdk.OneInt(), "test")
 	require.True(t, sh(ctx, msg).IsOK())
 	staking.EndBlocker(ctx, sk)
-	val := sk.Validator(ctx, valOpAddr1)
-	rewards := getQueriedDelegationRewards(t, ctx, cdc, querier, sdk.AccAddress(valOpAddr1), valOpAddr1)
-	require.True(t, rewards.IsZero())
-	initial := int64(10)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	tokens := sdk.DecCoins{{sdk.DefaultBondDenom, sdk.NewDec(initial)}}
-	keeper.AllocateTokensToValidator(ctx, val, tokens)
-	rewards = getQueriedDelegationRewards(t, ctx, cdc, querier, sdk.AccAddress(valOpAddr1), valOpAddr1)
-	require.Equal(t, sdk.DecCoins{{sdk.DefaultBondDenom, sdk.NewDec(initial / 2)}}, rewards)
 
 	// test delegator's total rewards query
-	delRewards = getQueriedDelegatorTotalRewards(t, ctx, cdc, querier, sdk.AccAddress(valOpAddr1))
-	expectedDelReward := types.NewDelegationDelegatorReward(valOpAddr1,
-		sdk.DecCoins{sdk.NewInt64DecCoin("stake", 5)})
-	wantDelRewards := types.NewQueryDelegatorTotalRewardsResponse(
-		[]types.DelegationDelegatorReward{expectedDelReward}, expectedDelReward.Reward)
-	require.Equal(t, wantDelRewards, delRewards)
-
 	// currently community pool hold nothing so we should return null
 	communityPool := getQueriedCommunityPool(t, ctx, cdc, querier)
 	require.Nil(t, communityPool)
