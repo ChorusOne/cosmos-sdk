@@ -58,19 +58,6 @@ func getQueriedParams(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier s
 	return
 }
 
-func getQueriedValidatorOutstandingRewards(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, validatorAddr sdk.ValAddress) (outstandingRewards sdk.DecCoins) {
-	query := abci.RequestQuery{
-		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryValidatorOutstandingRewards}, "/"),
-		Data: cdc.MustMarshalJSON(types.NewQueryValidatorOutstandingRewardsParams(validatorAddr)),
-	}
-
-	bz, err := querier(ctx, []string{types.QueryValidatorOutstandingRewards}, query)
-	require.Nil(t, err)
-	require.Nil(t, cdc.UnmarshalJSON(bz, &outstandingRewards))
-
-	return
-}
-
 func getQueriedValidatorCommission(t *testing.T, ctx sdk.Context, cdc *codec.Codec, querier sdk.Querier, validatorAddr sdk.ValAddress) (validatorCommission sdk.DecCoins) {
 	query := abci.RequestQuery{
 		Path: strings.Join([]string{custom, types.QuerierRoute, types.QueryValidatorCommission}, "/"),
@@ -158,12 +145,6 @@ func TestQueries(t *testing.T) {
 	require.Equal(t, bonusProposerReward, retBonusProposerReward)
 	require.Equal(t, withdrawAddrEnabled, retWithdrawAddrEnabled)
 
-	// test outstanding rewards query
-	outstandingRewards := sdk.DecCoins{{"mytoken", sdk.NewDec(3)}, {"myothertoken", sdk.NewDecWithPrec(3, 7)}}
-	keeper.SetValidatorOutstandingRewards(ctx, valOpAddr1, outstandingRewards)
-	retOutstandingRewards := getQueriedValidatorOutstandingRewards(t, ctx, cdc, querier, valOpAddr1)
-	require.Equal(t, outstandingRewards, retOutstandingRewards)
-
 	// test validator commission query
 	commission := sdk.DecCoins{{"token1", sdk.NewDec(4)}, {"token2", sdk.NewDec(2)}}
 	keeper.SetValidatorAccumulatedCommission(ctx, valOpAddr1, commission)
@@ -190,7 +171,7 @@ func TestQueries(t *testing.T) {
 	sh := staking.NewHandler(sk)
 	comm := staking.NewCommissionRates(sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(5, 1), sdk.NewDec(0))
 	msg := staking.NewMsgCreateValidator(valOpAddr1, valConsPk1,
-		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), staking.Description{}, comm, sdk.OneInt(), "test1")
+		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), staking.Description{}, comm, sdk.OneInt(), "test")
 	require.True(t, sh(ctx, msg).IsOK())
 	staking.EndBlocker(ctx, sk)
 	val := sk.Validator(ctx, valOpAddr1)

@@ -123,11 +123,11 @@ func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val exported.Validato
 	currentCommission = currentCommission.Add(commission)
 	k.SetValidatorAccumulatedCommission(ctx, val.GetOperator(), currentCommission)
 
-	if _, ok := val.(staking.Validator); ok {
+	if validator, ok := val.(staking.Validator); ok {
 		// huge massive caveat; at this point in time, we ignore any non baseDenom tokens.
 		// TODO: don't do this, it sucks.
-		k.stakingKeeper.AddValidatorTokens(ctx, val, shared.AmountOf(k.stakingKeeper.BondDenom(ctx)).TruncateInt())
-		k.stakingKeeper.AddFeesToAuctionPool(ctx, val, nonBondDenomTokens)
+		k.stakingKeeper.AddValidatorTokens(ctx, validator, shared.AmountOf(k.stakingKeeper.BondDenom(ctx)).TruncateInt())
+		k.stakingKeeper.AddFeesToAuctionPool(ctx, validator, nonBondDenomTokens)
 	} else {
 		fmt.Println("Well this is shit...")
 	}

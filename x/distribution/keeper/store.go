@@ -188,42 +188,6 @@ func (k Keeper) GetValidatorHistoricalReferenceCount(ctx sdk.Context) (count uin
 	return
 }
 
-// get current rewards for a validator
-func (k Keeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.ValAddress) (rewards types.ValidatorCurrentRewards) {
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(GetValidatorCurrentRewardsKey(val))
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
-	return
-}
-
-// set current rewards for a validator
-func (k Keeper) SetValidatorCurrentRewards(ctx sdk.Context, val sdk.ValAddress, rewards types.ValidatorCurrentRewards) {
-	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryLengthPrefixed(rewards)
-	store.Set(GetValidatorCurrentRewardsKey(val), b)
-}
-
-// delete current rewards for a validator
-func (k Keeper) DeleteValidatorCurrentRewards(ctx sdk.Context, val sdk.ValAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetValidatorCurrentRewardsKey(val))
-}
-
-// iterate over current rewards
-func (k Keeper) IterateValidatorCurrentRewards(ctx sdk.Context, handler func(val sdk.ValAddress, rewards types.ValidatorCurrentRewards) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, ValidatorCurrentRewardsPrefix)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var rewards types.ValidatorCurrentRewards
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &rewards)
-		addr := GetValidatorCurrentRewardsAddress(iter.Key())
-		if handler(addr, rewards) {
-			break
-		}
-	}
-}
-
 // get accumulated commission for a validator
 func (k Keeper) GetValidatorAccumulatedCommission(ctx sdk.Context, val sdk.ValAddress) (commission types.ValidatorAccumulatedCommission) {
 	store := ctx.KVStore(k.storeKey)
@@ -265,42 +229,6 @@ func (k Keeper) IterateValidatorAccumulatedCommissions(ctx sdk.Context, handler 
 		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &commission)
 		addr := GetValidatorAccumulatedCommissionAddress(iter.Key())
 		if handler(addr, commission) {
-			break
-		}
-	}
-}
-
-// get validator outstanding rewards
-func (k Keeper) GetValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddress) (rewards types.ValidatorOutstandingRewards) {
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(GetValidatorOutstandingRewardsKey(val))
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &rewards)
-	return
-}
-
-// set validator outstanding rewards
-func (k Keeper) SetValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddress, rewards types.ValidatorOutstandingRewards) {
-	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryLengthPrefixed(rewards)
-	store.Set(GetValidatorOutstandingRewardsKey(val), b)
-}
-
-// delete validator outstanding rewards
-func (k Keeper) DeleteValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetValidatorOutstandingRewardsKey(val))
-}
-
-// iterate validator outstanding rewards
-func (k Keeper) IterateValidatorOutstandingRewards(ctx sdk.Context, handler func(val sdk.ValAddress, rewards types.ValidatorOutstandingRewards) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, ValidatorOutstandingRewardsPrefix)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var rewards types.ValidatorOutstandingRewards
-		k.cdc.MustUnmarshalBinaryLengthPrefixed(iter.Value(), &rewards)
-		addr := GetValidatorOutstandingRewardsAddress(iter.Key())
-		if handler(addr, rewards) {
 			break
 		}
 	}

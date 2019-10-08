@@ -40,10 +40,8 @@ var (
 	// functions aliases
 	RegisterInvariants                         = keeper.RegisterInvariants
 	AllInvariants                              = keeper.AllInvariants
-	NonNegativeOutstandingInvariant            = keeper.NonNegativeOutstandingInvariant
 	CanWithdrawInvariant                       = keeper.CanWithdrawInvariant
 	ReferenceCountInvariant                    = keeper.ReferenceCountInvariant
-	ModuleAccountInvariant                     = keeper.ModuleAccountInvariant
 	NewKeeper                                  = keeper.NewKeeper
 	GetValidatorOutstandingRewardsAddress      = keeper.GetValidatorOutstandingRewardsAddress
 	GetDelegatorWithdrawInfoAddress            = keeper.GetDelegatorWithdrawInfoAddress
@@ -85,7 +83,6 @@ var (
 	DefaultGenesisState                        = types.DefaultGenesisState
 	ValidateGenesis                            = types.ValidateGenesis
 	NewMsgSetWithdrawAddress                   = types.NewMsgSetWithdrawAddress
-	NewMsgWithdrawDelegatorReward              = types.NewMsgWithdrawDelegatorReward
 	NewMsgWithdrawValidatorCommission          = types.NewMsgWithdrawValidatorCommission
 	NewCommunityPoolSpendProposal              = types.NewCommunityPoolSpendProposal
 	NewQueryValidatorOutstandingRewardsParams  = types.NewQueryValidatorOutstandingRewardsParams
@@ -120,7 +117,6 @@ var (
 	EventTypeSetWithdrawAddress          = types.EventTypeSetWithdrawAddress
 	EventTypeRewards                     = types.EventTypeRewards
 	EventTypeCommission                  = types.EventTypeCommission
-	EventTypeWithdrawRewards             = types.EventTypeWithdrawRewards
 	EventTypeWithdrawCommission          = types.EventTypeWithdrawCommission
 	EventTypeProposerReward              = types.EventTypeProposerReward
 	AttributeKeyWithdrawAddress          = types.AttributeKeyWithdrawAddress
@@ -144,7 +140,6 @@ type (
 	ValidatorSlashEventRecord              = types.ValidatorSlashEventRecord
 	GenesisState                           = types.GenesisState
 	MsgSetWithdrawAddress                  = types.MsgSetWithdrawAddress
-	MsgWithdrawDelegatorReward             = types.MsgWithdrawDelegatorReward
 	MsgWithdrawValidatorCommission         = types.MsgWithdrawValidatorCommission
 	CommunityPoolSpendProposal             = types.CommunityPoolSpendProposal
 	QueryValidatorOutstandingRewardsParams = types.QueryValidatorOutstandingRewardsParams

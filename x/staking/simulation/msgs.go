@@ -44,7 +44,7 @@ func SimulateMsgCreateValidator(m auth.AccountKeeper, k staking.Keeper) simulati
 
 		selfDelegation := sdk.NewCoin(denom, amount)
 		msg := staking.NewMsgCreateValidator(address, acc.PubKey,
-			selfDelegation, description, commission, sdk.OneInt(), "quicksilver_fixme")
+			selfDelegation, description, commission, sdk.OneInt(), "sim")
 
 		if msg.ValidateBasic() != nil {
 			return simulation.NoOpMsg(staking.ModuleName), nil, fmt.Errorf("expected msg to pass ValidateBasic: %s", msg.GetSignBytes())

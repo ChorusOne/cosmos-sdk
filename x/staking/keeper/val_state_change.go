@@ -39,7 +39,6 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 	iterator := sdk.KVStoreReversePrefixIterator(store, types.ValidatorsByPowerIndexKey)
 	defer iterator.Close()
 	for count := 0; iterator.Valid() && count < int(maxValidators); iterator.Next() {
-		println(count)
 		// everything that is iterated in this loop is becoming or already a
 		// part of the bonded validator set
 
@@ -82,7 +81,6 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 
 		// update the validator set if power has changed
 		if !found || !bytes.Equal(oldPowerBytes, newPowerBytes) {
-			fmt.Printf("Update for %d\n", count)
 			updates = append(updates, validator.ABCIValidatorUpdate())
 
 			// set validator power on lookup index

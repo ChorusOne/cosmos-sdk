@@ -55,8 +55,8 @@ func newTestInput(t *testing.T) testInput {
 	ctx := sdk.NewContext(ms, abci.Header{Time: time.Unix(0, 0)}, false, log.NewTMLogger(os.Stdout))
 
 	feeCollectorAcc := supply.NewEmptyModuleAccount(auth.FeeCollectorName)
-	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking)
-	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking)
+	notBondedPool := supply.NewEmptyModuleAccount(staking.NotBondedPoolName, supply.Burner, supply.Staking, supply.Minter)
+	bondPool := supply.NewEmptyModuleAccount(staking.BondedPoolName, supply.Burner, supply.Staking, supply.Minter)
 	minterAcc := supply.NewEmptyModuleAccount(types.ModuleName, supply.Minter)
 
 	blacklistedAddrs := make(map[string]bool)
@@ -71,13 +71,14 @@ func newTestInput(t *testing.T) testInput {
 	maccPerms := map[string][]string{
 		auth.FeeCollectorName:     nil,
 		types.ModuleName:          []string{supply.Minter},
-		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking},
-		staking.BondedPoolName:    []string{supply.Burner, supply.Staking},
+		staking.NotBondedPoolName: []string{supply.Burner, supply.Staking, supply.Minter},
+		staking.BondedPoolName:    []string{supply.Burner, supply.Staking, supply.Minter},
 	}
 	supplyKeeper := supply.NewKeeper(types.ModuleCdc, keySupply, accountKeeper, bankKeeper, maccPerms)
 	supplyKeeper.SetSupply(ctx, supply.NewSupply(sdk.Coins{}))
 
 	stakingKeeper := staking.NewKeeper(
+<<<<<<< HEAD
 		types.ModuleCdc,
 		keyStaking,
 		tkeyStaking,
@@ -85,6 +86,9 @@ func newTestInput(t *testing.T) testInput {
 		bankKeeper,
 		paramsKeeper.Subspace(staking.DefaultParamspace),
 		staking.DefaultCodespace,
+=======
+		types.ModuleCdc, keyStaking, tkeyStaking, supplyKeeper, bankKeeper, paramsKeeper.Subspace(staking.DefaultParamspace), staking.DefaultCodespace,
+>>>>>>> further test fixes
 	)
 	mintKeeper := NewKeeper(types.ModuleCdc, keyMint, paramsKeeper.Subspace(types.DefaultParamspace), &stakingKeeper, supplyKeeper, auth.FeeCollectorName)
 
