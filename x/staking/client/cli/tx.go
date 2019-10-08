@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -330,6 +331,10 @@ func PrepareFlagsForTxCreateValidator(
 	}
 	if viper.GetString(FlagMinSelfDelegation) == "" {
 		viper.Set(FlagMinSelfDelegation, defaultMinSelfDelegation)
+	}
+
+	if viper.GetString(FlagSharesDenomPrefix) == "" {
+		viper.Set(FlagSharesDenomPrefix, strings.ToLower(config.Moniker[0:int(math.Max(float64(len(config.Moniker)), 6.00))]))
 	}
 }
 
