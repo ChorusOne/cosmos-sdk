@@ -40,7 +40,7 @@ type msgCreateValidatorJSON struct {
 	ValidatorAddress  sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
 	PubKey            string          `json:"pubkey" yaml:"pubkey"`
 	Value             sdk.Coin        `json:"value" yaml:"value"`
-	ShareTokenDenom   string          `json:"share_token_denom"`
+	ShareTokenDenom   string          `json:"goblins"`
 }
 
 // Default way to create validator. Delegator address and validator address are the same
