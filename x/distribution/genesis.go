@@ -24,12 +24,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, supplyKeeper types.SupplyKeeper
 	for _, acc := range data.ValidatorAccumulatedCommissions {
 		keeper.SetValidatorAccumulatedCommission(ctx, acc.ValidatorAddress, acc.Accumulated)
 	}
-	for _, his := range data.ValidatorHistoricalRewards {
-		keeper.SetValidatorHistoricalRewards(ctx, his.ValidatorAddress, his.Period, his.Rewards)
-	}
-	for _, cur := range data.ValidatorCurrentRewards {
-		keeper.SetValidatorCurrentRewards(ctx, cur.ValidatorAddress, cur.Rewards)
-	}
 	for _, del := range data.DelegatorStartingInfos {
 		keeper.SetDelegatorStartingInfo(ctx, del.ValidatorAddress, del.DelegatorAddress, del.StartingInfo)
 	}
@@ -81,27 +75,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 			return false
 		},
 	)
-	his := make([]types.ValidatorHistoricalRewardsRecord, 0)
-	keeper.IterateValidatorHistoricalRewards(ctx,
-		func(val sdk.ValAddress, period uint64, rewards types.ValidatorHistoricalRewards) (stop bool) {
-			his = append(his, types.ValidatorHistoricalRewardsRecord{
-				ValidatorAddress: val,
-				Period:           period,
-				Rewards:          rewards,
-			})
-			return false
-		},
-	)
-	cur := make([]types.ValidatorCurrentRewardsRecord, 0)
-	keeper.IterateValidatorCurrentRewards(ctx,
-		func(val sdk.ValAddress, rewards types.ValidatorCurrentRewards) (stop bool) {
-			cur = append(cur, types.ValidatorCurrentRewardsRecord{
-				ValidatorAddress: val,
-				Rewards:          rewards,
-			})
-			return false
-		},
-	)
 	dels := make([]types.DelegatorStartingInfoRecord, 0)
 	keeper.IterateDelegatorStartingInfos(ctx,
 		func(val sdk.ValAddress, del sdk.AccAddress, info types.DelegatorStartingInfo) (stop bool) {
@@ -125,6 +98,9 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 			return false
 		},
 	)
-	return types.NewGenesisState(feePool, communityTax, baseProposerRewards, bonusProposerRewards, withdrawAddrEnabled,
-		dwi, pp, []types.ValidatorOutstandingRewardsRecord{}, acc, his, cur, dels, slashes)
+	return types.NewGenesisState(feePool, communityTax, baseProposerRewards,
+		bonusProposerRewards, withdrawAddrEnabled, dwi, pp,
+		[]types.ValidatorOutstandingRewardsRecord{}, acc,
+		[]types.ValidatorHistoricalRewardsRecord{},
+		[]types.ValidatorCurrentRewardsRecord{}, dels, slashes)
 }
