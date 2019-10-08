@@ -36,6 +36,7 @@ func TestPrepareFlagsForTxCreateValidator(t *testing.T) {
 		commissionMaxRate       string
 		commissionMaxChangeRate string
 		minSelfDelegation       string
+		sharesDenomPrefix       string
 	}
 
 	type testcase struct {
@@ -52,10 +53,14 @@ func TestPrepareFlagsForTxCreateValidator(t *testing.T) {
 		require.Equal(t, params.commissionMaxRate, viper.GetString(FlagCommissionMaxRate))
 		require.Equal(t, params.commissionMaxChangeRate, viper.GetString(FlagCommissionMaxChangeRate))
 		require.Equal(t, params.minSelfDelegation, viper.GetString(FlagMinSelfDelegation))
+		require.Equal(t, params.sharesDenomPrefix, viper.GetString(FlagSharesDenomPrefix))
 	}
 
+	cfg := ctx.Config
+	cfg.Moniker = "test"
+
 	tests := []testcase{
-		{"No parameters", args{ctx.Config, "X", "chainId", valPubKey}},
+		{"No parameters", args{cfg, "X", "chainId", valPubKey}},
 	}
 
 	defaultParams := extraParams{
@@ -64,7 +69,10 @@ func TestPrepareFlagsForTxCreateValidator(t *testing.T) {
 		defaultCommissionMaxRate,
 		defaultCommissionMaxChangeRate,
 		defaultMinSelfDelegation,
+		"test",
 	}
+	// do this because else we fall back the first six chars of the moniker,
+	// which changes depending on the host system's hostname. and this sucks.
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) { runTest(t, tt, defaultParams) })
@@ -72,12 +80,13 @@ func TestPrepareFlagsForTxCreateValidator(t *testing.T) {
 	}
 
 	// Override default params
-	params := extraParams{"5stake", "1.0", "1.0", "1.0", "1.0"}
+	params := extraParams{"5stake", "1.0", "1.0", "1.0", "1.0", "test"}
 	viper.Set(FlagAmount, params.amount)
 	viper.Set(FlagCommissionRate, params.commissionRate)
 	viper.Set(FlagCommissionMaxRate, params.commissionMaxRate)
 	viper.Set(FlagCommissionMaxChangeRate, params.commissionMaxChangeRate)
 	viper.Set(FlagMinSelfDelegation, params.minSelfDelegation)
+	viper.Set(FlagSharesDenomPrefix, params.sharesDenomPrefix)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) { runTest(t, tt, params) })
 	}
