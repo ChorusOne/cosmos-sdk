@@ -190,8 +190,9 @@ func GenTxCmd(ctx *server.Context, cdc *codec.Codec, mbm module.BasicManager, sm
 	cmd.Flags().String(client.FlagOutputDocument, "",
 		"write the genesis transaction JSON document to the given file instead of the default location")
 	cmd.Flags().AddFlagSet(fsCreateValidator)
-
+	cmd.Flags().String(client.FlagSharesDenomPrefix, "", "prefix for the delegation voucher prefix")
 	cmd.MarkFlagRequired(client.FlagName)
+	cmd.MarkFlagRequired(client.FlagSharesDenomPrefix)
 	return cmd
 }
 

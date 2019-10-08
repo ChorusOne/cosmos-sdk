@@ -74,6 +74,7 @@ func GetCmdCreateValidator(cdc *codec.Codec) *cobra.Command {
 	cmd.MarkFlagRequired(FlagAmount)
 	cmd.MarkFlagRequired(FlagPubKey)
 	cmd.MarkFlagRequired(FlagMoniker)
+	cmd.MarkFlagRequired(FlagSharesDenomPrefix)
 
 	return cmd
 }
@@ -298,6 +299,7 @@ func PrepareFlagsForTxCreateValidator(
 	website := viper.GetString(FlagWebsite)
 	details := viper.GetString(FlagDetails)
 	identity := viper.GetString(FlagIdentity)
+	sharesDenomPrefix := viper.GetString(FlagSharesDenomPrefix)
 
 	viper.Set(client.FlagChainID, chainID)
 	viper.Set(client.FlagFrom, viper.GetString(client.FlagName))
@@ -308,6 +310,7 @@ func PrepareFlagsForTxCreateValidator(
 	viper.Set(FlagWebsite, website)
 	viper.Set(FlagDetails, details)
 	viper.Set(FlagIdentity, identity)
+	viper.Set(FlagSharesDenomPrefix, sharesDenomPrefix)
 
 	if config.Moniker == "" {
 		viper.Set(FlagMoniker, viper.GetString(client.FlagName))

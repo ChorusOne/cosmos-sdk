@@ -216,6 +216,9 @@ func validateGenesisStateValidators(validators []types.Validator) (err error) {
 		if val.DelegatorShares.IsZero() && !val.IsUnbonding() {
 			return fmt.Errorf("bonded/unbonded genesis validator cannot have zero delegator shares, validator: %v", val)
 		}
+		if val.SharesDenomPrefix == "" {
+			return fmt.Errorf("shares_denom_prefix cannot be empty")
+		}
 		addrMap[strKey] = true
 	}
 	return
