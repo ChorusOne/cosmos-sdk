@@ -481,7 +481,7 @@ func GenStakingGenesisState(
 		valAddr := sdk.ValAddress(accs[i].Address)
 		valAddrs[i] = valAddr
 
-		validator := staking.NewValidator(valAddr, accs[i].PubKey, staking.Description{})
+		validator := staking.NewValidator(valAddr, accs[i].PubKey, staking.Description{}, fmt.Sprintf("val%d", i))
 		validator.Tokens = sdk.NewInt(amount)
 		validator.DelegatorShares = sdk.NewDec(amount)
 		delegation := staking.NewDelegation(accs[i].Address, valAddr, sdk.NewDec(amount))
@@ -570,12 +570,6 @@ func DecodeDistributionStore(cdcA, cdcB *codec.Codec, kvA, kvB cmn.KVPair) strin
 	case bytes.Equal(kvA.Key[:1], distribution.ProposerKey):
 		return fmt.Sprintf("%v\n%v", sdk.ConsAddress(kvA.Value), sdk.ConsAddress(kvB.Value))
 
-	case bytes.Equal(kvA.Key[:1], distribution.ValidatorOutstandingRewardsPrefix):
-		var rewardsA, rewardsB distribution.ValidatorOutstandingRewards
-		cdcA.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &rewardsA)
-		cdcB.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &rewardsB)
-		return fmt.Sprintf("%v\n%v", rewardsA, rewardsB)
-
 	case bytes.Equal(kvA.Key[:1], distribution.DelegatorWithdrawAddrPrefix):
 		return fmt.Sprintf("%v\n%v", sdk.AccAddress(kvA.Value), sdk.AccAddress(kvB.Value))
 
@@ -584,18 +578,6 @@ func DecodeDistributionStore(cdcA, cdcB *codec.Codec, kvA, kvB cmn.KVPair) strin
 		cdcA.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &infoA)
 		cdcB.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &infoB)
 		return fmt.Sprintf("%v\n%v", infoA, infoB)
-
-	case bytes.Equal(kvA.Key[:1], distribution.ValidatorHistoricalRewardsPrefix):
-		var rewardsA, rewardsB distribution.ValidatorHistoricalRewards
-		cdcA.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &rewardsA)
-		cdcB.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &rewardsB)
-		return fmt.Sprintf("%v\n%v", rewardsA, rewardsB)
-
-	case bytes.Equal(kvA.Key[:1], distribution.ValidatorCurrentRewardsPrefix):
-		var rewardsA, rewardsB distribution.ValidatorCurrentRewards
-		cdcA.MustUnmarshalBinaryLengthPrefixed(kvA.Value, &rewardsA)
-		cdcB.MustUnmarshalBinaryLengthPrefixed(kvB.Value, &rewardsB)
-		return fmt.Sprintf("%v\n%v", rewardsA, rewardsB)
 
 	case bytes.Equal(kvA.Key[:1], distribution.ValidatorAccumulatedCommissionPrefix):
 		var commissionA, commissionB distribution.ValidatorAccumulatedCommission

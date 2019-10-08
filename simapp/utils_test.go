@@ -135,20 +135,14 @@ func TestDecodeDistributionStore(t *testing.T) {
 	feePool := distr.InitialFeePool()
 	feePool.CommunityPool = decCoins
 	info := distr.NewDelegatorStartingInfo(2, sdk.OneDec(), 200)
-	outstanding := distr.ValidatorOutstandingRewards{decCoins[0]}
 	commission := distr.ValidatorAccumulatedCommission{decCoins[0]}
-	historicalRewards := distr.NewValidatorHistoricalRewards(decCoins, 100)
-	currentRewards := distr.NewValidatorCurrentRewards(decCoins, 5)
 	slashEvent := distr.NewValidatorSlashEvent(10, sdk.OneDec())
 
 	kvPairs := cmn.KVPairs{
 		cmn.KVPair{Key: distr.FeePoolKey, Value: cdc.MustMarshalBinaryLengthPrefixed(feePool)},
 		cmn.KVPair{Key: distr.ProposerKey, Value: consAddr1.Bytes()},
-		cmn.KVPair{Key: distr.GetValidatorOutstandingRewardsKey(valAddr1), Value: cdc.MustMarshalBinaryLengthPrefixed(outstanding)},
 		cmn.KVPair{Key: distr.GetDelegatorWithdrawAddrKey(delAddr1), Value: delAddr1.Bytes()},
 		cmn.KVPair{Key: distr.GetDelegatorStartingInfoKey(valAddr1, delAddr1), Value: cdc.MustMarshalBinaryLengthPrefixed(info)},
-		cmn.KVPair{Key: distr.GetValidatorHistoricalRewardsKey(valAddr1, 100), Value: cdc.MustMarshalBinaryLengthPrefixed(historicalRewards)},
-		cmn.KVPair{Key: distr.GetValidatorCurrentRewardsKey(valAddr1), Value: cdc.MustMarshalBinaryLengthPrefixed(currentRewards)},
 		cmn.KVPair{Key: distr.GetValidatorAccumulatedCommissionKey(valAddr1), Value: cdc.MustMarshalBinaryLengthPrefixed(commission)},
 		cmn.KVPair{Key: distr.GetValidatorSlashEventKeyPrefix(valAddr1, 13), Value: cdc.MustMarshalBinaryLengthPrefixed(slashEvent)},
 		cmn.KVPair{Key: []byte{0x99}, Value: []byte{0x99}},
@@ -160,11 +154,8 @@ func TestDecodeDistributionStore(t *testing.T) {
 	}{
 		{"FeePool", fmt.Sprintf("%v\n%v", feePool, feePool)},
 		{"Proposer", fmt.Sprintf("%v\n%v", consAddr1, consAddr1)},
-		{"ValidatorOutstandingRewards", fmt.Sprintf("%v\n%v", outstanding, outstanding)},
 		{"DelegatorWithdrawAddr", fmt.Sprintf("%v\n%v", delAddr1, delAddr1)},
 		{"DelegatorStartingInfo", fmt.Sprintf("%v\n%v", info, info)},
-		{"ValidatorHistoricalRewards", fmt.Sprintf("%v\n%v", historicalRewards, historicalRewards)},
-		{"ValidatorCurrentRewards", fmt.Sprintf("%v\n%v", currentRewards, currentRewards)},
 		{"ValidatorAccumulatedCommission", fmt.Sprintf("%v\n%v", commission, commission)},
 		{"ValidatorSlashEvent", fmt.Sprintf("%v\n%v", slashEvent, slashEvent)},
 		{"other", ""},
@@ -186,7 +177,7 @@ func TestDecodeStakingStore(t *testing.T) {
 
 	bondTime := time.Now().UTC()
 
-	val := staking.NewValidator(valAddr1, delPk1, staking.NewDescription("test", "test", "test", "test"))
+	val := staking.NewValidator(valAddr1, delPk1, staking.NewDescription("test", "test", "test", "test"), "test")
 	del := staking.NewDelegation(delAddr1, valAddr1, sdk.OneDec())
 	ubd := staking.NewUnbondingDelegation(delAddr1, valAddr1, 15, bondTime, sdk.OneInt())
 	red := staking.NewRedelegation(delAddr1, valAddr1, valAddr1, 12, bondTime, sdk.OneInt(), sdk.OneDec())
