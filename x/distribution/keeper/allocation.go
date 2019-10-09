@@ -106,7 +106,8 @@ func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val exported.Validato
 	// split tokens into bondDenomTokens and nonBondDenomTokens
 	bondDenomTokens := tokens.Intersect(sdk.DecCoins{{k.stakingKeeper.BondDenom(ctx), sdk.OneDec()}})
 	nonBondDenomTokens := tokens.Except(sdk.DecCoins{{k.stakingKeeper.BondDenom(ctx), sdk.OneDec()}})
-
+	fmt.Printf("BondDenom: %v", bondDenomTokens)
+	fmt.Printf("NonbondDenom: %v", nonBondDenomTokens)
 	commission := bondDenomTokens.MulDec(val.GetCommission())
 	// nonBondDenomTokens commission handled post-auction
 	shared := bondDenomTokens.Sub(commission)
