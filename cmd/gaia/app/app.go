@@ -202,6 +202,10 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
+func (app *GaiaApp) GetCodec() *codec.Codec {
+	return app.cdc
+}
+
 // application updates every end block
 func (app *GaiaApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	// mint new tokens for the previous block

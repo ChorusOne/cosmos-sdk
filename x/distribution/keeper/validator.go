@@ -112,3 +112,7 @@ func (k Keeper) updateValidatorSlashFraction(ctx sdk.Context, valAddr sdk.ValAdd
 	}
 	k.SetValidatorSlashEvent(ctx, valAddr, height, types.NewValidatorSlashEvent(endedPeriod, updatedFraction))
 }
+
+func (k Keeper) IncrementValidatorPeriod(ctx sdk.Context, val sdk.Validator) uint64 {
+	return k.incrementValidatorPeriod(ctx, val)
+}

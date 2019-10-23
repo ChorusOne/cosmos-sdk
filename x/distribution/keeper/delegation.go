@@ -150,3 +150,7 @@ func (k Keeper) withdrawDelegationRewards(ctx sdk.Context, val sdk.Validator, de
 
 	return nil
 }
+
+func (k Keeper) CalculateDelegationRewards(ctx sdk.Context, val sdk.Validator, del sdk.Delegation, endingPeriod uint64) (rewards sdk.DecCoins) {
+	return k.calculateDelegationRewards(ctx, val, del, endingPeriod)
+}
