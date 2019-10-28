@@ -390,3 +390,19 @@ func (h StakingHooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAdd
 	h.dh.BeforeValidatorSlashed(ctx, valAddr, fraction)
 	h.sh.BeforeValidatorSlashed(ctx, valAddr, fraction)
 }
+
+func (app *GaiaApp) StakingKeeper() staking.Keeper {
+	return app.stakingKeeper
+}
+
+func (app *GaiaApp) DistrKeeper() distr.Keeper {
+	return app.distrKeeper
+}
+
+func (app *GaiaApp) BankKeeper() bank.Keeper {
+	return app.bankKeeper
+}
+
+func (app *GaiaApp) AccountKeeper() auth.AccountKeeper {
+	return app.accountKeeper
+}
