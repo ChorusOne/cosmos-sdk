@@ -122,6 +122,10 @@ func NewBaseApp(
 	return app
 }
 
+func (app *BaseApp) GetTxDecoder() sdk.TxDecoder {
+	return app.txDecoder
+}
+
 // Name returns the name of the BaseApp.
 func (app *BaseApp) Name() string {
 	return app.name
