@@ -151,6 +151,12 @@ func validatorInfoHandlerFn(cliCtx context.CLIContext, cdc *codec.Codec,
 			return
 		}
 
+
+		cliCtx, ok = rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		// query commission
 		commissionRes, err := common.QueryValidatorCommission(cliCtx, cdc, queryRoute, validatorAddr)
 		if err != nil {
