@@ -11,6 +11,8 @@ type Config struct {
 	sealed              bool
 	bech32AddressPrefix map[string]string
 	txEncoder           TxEncoder
+	coinType            uint32
+	fullFundraiserPath  string
 }
 
 var (
@@ -25,6 +27,8 @@ var (
 			"validator_pub":  Bech32PrefixValPub,
 			"consensus_pub":  Bech32PrefixConsPub,
 		},
+		coinType:           CoinType,
+		fullFundraiserPath: FullFundraiserPath,
 		txEncoder: nil,
 	}
 )
@@ -41,6 +45,24 @@ func (config *Config) assertNotSealed() {
 	if config.sealed {
 		panic("Config is sealed")
 	}
+}
+
+func (config *Config) SetCoinType(coinType uint32) {
+	config.assertNotSealed()
+	config.coinType = coinType
+}
+
+func (config *Config) SetFullFundraiserPath(fullFundraiserPath string) {
+	config.assertNotSealed()
+	config.fullFundraiserPath = fullFundraiserPath
+}
+
+func (config *Config) GetCoinType() uint32 {
+	return config.coinType
+}
+
+func (config *Config) GetFullFundraiserPath() string {
+	return config.fullFundraiserPath
 }
 
 // SetBech32PrefixForAccount builds the Config with Bech32 addressPrefix and publKeyPrefix for accounts
