@@ -41,6 +41,11 @@ func signingInfoHandlerFn(cliCtx context.CLIContext, storeName string, cdc *code
 			return
 		}
 
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
 		signingInfo, code, err := getSigningInfo(cliCtx, storeName, cdc, pk.Address())
 
 		if err != nil {
@@ -60,6 +65,11 @@ func signingInfoHandlerListFn(cliCtx context.CLIContext, storeName string, cdc *
 		_, page, limit, err := rest.ParseHTTPArgs(r)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
 			return
 		}
 
@@ -106,6 +116,11 @@ func signingInfoHandlerListFn(cliCtx context.CLIContext, storeName string, cdc *
 func queryParamsHandlerFn(cdc *codec.Codec, cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		route := fmt.Sprintf("custom/%s/parameters", slashing.QuerierRoute)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
 
 		res, err := cliCtx.QueryWithData(route, nil)
 		if err != nil {
