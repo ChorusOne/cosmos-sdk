@@ -151,10 +151,12 @@ func (k Keeper) withdrawDelegationRewards(ctx sdk.Context, val sdk.Validator, de
 			return err
 		}
 
-		f, _ := os.OpenFile(fmt.Sprintf("./extract/unchecked/rewards.%d.%s", ctx.BlockHeight(), ctx.ChainID()), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-		defer f.Close()
-		for _, coin := range coins {
-			f.WriteString(fmt.Sprintf("%s,%s,%s,%d,%d,%s,%s,%d\n", del.GetDelegatorAddr().String(), del.GetValidatorAddr().String(), coin.Denom, 0, uint64(ctx.BlockHeight()), ctx.BlockHeader().Time.Format("2006-01-02 15:04:05"), ctx.ChainID(), types.WithdrawSourceZero))
+		if ctx.Value("ExtractDataMode") != nil {
+			f, _ := os.OpenFile(fmt.Sprintf("./extract/unchecked/rewards.%d.%s", ctx.BlockHeight(), ctx.ChainID()), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+			defer f.Close()
+			for _, coin := range coins {
+				f.WriteString(fmt.Sprintf("%s,%s,%s,%d,%d,%s,%s,%d\n", del.GetDelegatorAddr().String(), del.GetValidatorAddr().String(), coin.Denom, 0, uint64(ctx.BlockHeight()), ctx.BlockHeader().Time.Format("2006-01-02 15:04:05"), ctx.ChainID(), types.WithdrawSourceZero))
+			}
 		}
 	}
 
