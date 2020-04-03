@@ -28,6 +28,8 @@ import (
 	dist "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
 	gv "github.com/cosmos/cosmos-sdk/x/gov"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	mt "github.com/cosmos/cosmos-sdk/x/mint"
+	mint "github.com/cosmos/cosmos-sdk/x/mint/client/rest"
 	sl "github.com/cosmos/cosmos-sdk/x/slashing"
 	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	st "github.com/cosmos/cosmos-sdk/x/staking"
@@ -38,6 +40,7 @@ import (
 	distcmd "github.com/cosmos/cosmos-sdk/x/distribution"
 	distClient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	govClient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	mintClient "github.com/cosmos/cosmos-sdk/x/mint/client"
 	slashingClient "github.com/cosmos/cosmos-sdk/x/slashing/client"
 	stakingClient "github.com/cosmos/cosmos-sdk/x/staking/client"
 
@@ -69,6 +72,7 @@ func main() {
 		distClient.NewModuleClient(distcmd.StoreKey, cdc),
 		stakingClient.NewModuleClient(st.StoreKey, cdc),
 		slashingClient.NewModuleClient(sl.StoreKey, cdc),
+		mintClient.NewModuleClient(mt.StoreKey, cdc),
 	}
 
 	rootCmd := &cobra.Command{
@@ -166,6 +170,7 @@ func registerRoutes(rs *lcd.RestServer) {
 	staking.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	slashing.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc, rs.KeyBase)
 	gov.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
+	mint.RegisterRoutes(rs.CliCtx, rs.Mux, rs.Cdc)
 }
 
 func registerSwaggerUI(rs *lcd.RestServer) {
