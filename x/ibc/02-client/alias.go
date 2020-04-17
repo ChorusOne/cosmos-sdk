@@ -9,6 +9,7 @@ package client
 import (
 	"github.com/cosmos/cosmos-sdk/x/ibc/02-client/keeper"
 	"github.com/cosmos/cosmos-sdk/x/ibc/02-client/types"
+	wasmKeeper "github.com/cosmos/cosmos-sdk/x/ibc/99-wasm/keeper"
 )
 
 const (
@@ -47,5 +48,6 @@ var (
 
 type (
 	Keeper        = keeper.Keeper
+	WasmKeeper    = wasmKeeper.Keeper
 	StakingKeeper = types.StakingKeeper
 )

@@ -18,6 +18,7 @@ import (
 	ibctmtypes "github.com/cosmos/cosmos-sdk/x/ibc/07-tendermint/types"
 	localhosttypes "github.com/cosmos/cosmos-sdk/x/ibc/09-localhost/types"
 	commitmenttypes "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment/types"
+	ibcwasmtypes "github.com/cosmos/cosmos-sdk/x/ibc/99-wasm/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/ibc/client/rest"
 	"github.com/cosmos/cosmos-sdk/x/ibc/types"
@@ -46,6 +47,7 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	channel.RegisterCodec(cdc)
 	ibctmtypes.RegisterCodec(cdc)
 	localhosttypes.RegisterCodec(cdc)
+	ibcwasmtypes.RegisterCodec(cdc)
 	commitmenttypes.RegisterCodec(cdc)
 }
 
