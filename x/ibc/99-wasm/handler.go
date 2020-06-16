@@ -29,40 +29,26 @@ func filterMessageEvents(manager *sdk.EventManager) sdk.Events {
 	return res
 }
 
-func HandleMsgWrappedData(ctx sdk.Context, k keeper.Keeper, msg types.MsgWrappedData) (*sdk.Result, error) {
-	err := msg.ValidateBasic()
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := k.Execute(ctx, msg.Target, types.ModuleAccount, msg.Data)
-	if err != nil {
-		return &sdk.Result{}, err
-	}
-	return &result, nil
-
-}
-
-func HandleMsgCreateClient(ctx sdk.Context, k keeper.Keeper, msg types.MsgCreateWasmClient) (*sdk.Result, error) {
-	ctx.Logger().Info("Validating Create")
-	err := msg.ValidateBasic()
-	if err != nil {
-		ctx.Logger().Info("Errored", err.Error())
-		return nil, err
-	}
-
-	addr, err := k.Instantiate(ctx, uint64(msg.WasmId), types.ModuleAccount, []byte(fmt.Sprintf(`{"name": "%s", "message": "%s"}`, msg.ClientID, msg.Message)), "client")
-	if err != nil {
-		ctx.Logger().Info("Errored", err.Error())
-		return nil, err
-	}
-
-	return &sdk.Result{
-		Data:   addr,
-		Events: nil,
-	}, nil
-
-}
+//func HandleMsgCreateClient(ctx sdk.Context, k keeper.Keeper, msg types.MsgCreateWasmClient) (*sdk.Result, error) {
+//	ctx.Logger().Info("Validating Create")
+//	err := msg.ValidateBasic()
+//	if err != nil {
+//		ctx.Logger().Info("Errored", err.Error())
+//		return nil, err
+//	}
+//
+//	addr, err := k.Instantiate(ctx, uint64(msg.WasmId), types.ModuleAccount, msg.Header, msg.ClientID)
+//	if err != nil {
+//		ctx.Logger().Info("Errored", err.Error())
+//		return nil, err
+//	}
+//
+//	return &sdk.Result{
+//		Data:   addr,
+//		Events: nil,
+//	}, nil
+//
+//}
 
 func HandleMsgStoreCode(ctx sdk.Context, k keeper.Keeper, msg types.MsgStoreClientCode) (*sdk.Result, error) {
 	err := msg.ValidateBasic()

@@ -14,7 +14,7 @@ import (
 func (k *Keeper) InitializeFromMsg(ctx sdk.Context,
 	msg ibcwasmtypes.MsgCreateWasmClient,
 ) (ibcwasmtypes.ClientState, error) {
-	return k.Initialize(ctx, msg.GetClientID(), msg.TrustingPeriod, msg.UnbondingPeriod, msg.MaxClockDrift, msg.Header, msg.WasmId)
+	return k.Initialize(ctx, msg.GetClientID(), msg.TrustingPeriod, msg.UnbondingPeriod, msg.MaxClockDrift, msg, msg.WasmId)
 }
 
 // Initialize creates a client state and validates its contents, checking that
@@ -22,18 +22,17 @@ func (k *Keeper) InitializeFromMsg(ctx sdk.Context,
 func (k *Keeper) Initialize(
 	ctx sdk.Context,
 	id string, trustingPeriod, ubdPeriod, maxClockDrift time.Duration,
-	header ibcwasmtypes.Header, wasmId int,
+	initMsg ibcwasmtypes.MsgCreateWasmClient, wasmId int,
 ) (ibcwasmtypes.ClientState, error) {
 	if trustingPeriod >= ubdPeriod {
 		return ibcwasmtypes.ClientState{}, errors.New("trusting period should be < unbonding period")
 	}
-
-	contractAddress, err := k.Instantiate(ctx, uint64(wasmId), ibcwasmtypes.ModuleAccount, []byte(""), fmt.Sprintf("wasm-client-%s-%d", id, wasmId))
+	contractAddress, err := k.Instantiate(ctx, uint64(wasmId), ibcwasmtypes.ModuleAccount, initMsg.Header, fmt.Sprintf("wasm-client-%s-%d", id, wasmId))
 	if err != nil {
 		return ibcwasmtypes.ClientState{}, err
 	}
 	clientState := ibcwasmtypes.NewClientState(
-		id, trustingPeriod, ubdPeriod, maxClockDrift, header, contractAddress,
+		id, trustingPeriod, ubdPeriod, maxClockDrift, ibcwasmtypes.Header{initMsg.Header}, contractAddress,
 	)
 	return clientState, nil
 }

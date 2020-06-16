@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/json"
+	commitmenttypes "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment/types"
 	"net/url"
 	"regexp"
 	"time"
@@ -10,7 +12,7 @@ import (
 	evidenceexported "github.com/cosmos/cosmos-sdk/x/evidence/exported"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	clientexported "github.com/cosmos/cosmos-sdk/x/ibc/02-client/exported"
-	commitmenttypes "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment/types"
+	//commitmenttypes "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 	ibctypes "github.com/cosmos/cosmos-sdk/x/ibc/types"
 )
@@ -23,7 +25,7 @@ const (
 	TypeMsgStoreClientCode              string = "store_wasmclient"
 	TypeMsgWrappedData                  string = "wrapped_data"
 
-	MaxWasmSize = 500 * 1024
+	MaxWasmSize = 1024 * 1024
 
 	// MaxLabelSize is the longest label that can be used when Instantiating a contract
 	MaxLabelSize = 128
@@ -53,8 +55,7 @@ var (
 // MsgCreateWasmClient defines a message to create an IBC client
 type MsgCreateWasmClient struct {
 	ClientID        string         `json:"client_id" yaml:"client_id"`
-	Header          Header         `json:"header" yaml:"header"`
-	Message         string         `json:"message" yaml:"message"`
+	Header          json.RawMessage `json:"header" yaml:"header"`
 	TrustingPeriod  time.Duration  `json:"trusting_period" yaml:"trusting_period"`
 	UnbondingPeriod time.Duration  `json:"unbonding_period" yaml:"unbonding_period"`
 	MaxClockDrift	time.Duration  `json:"max_clock_drift" yaml:"max_clock_drift"`
@@ -64,13 +65,12 @@ type MsgCreateWasmClient struct {
 
 // NewMsgCreateWasmClient creates a new MsgCreateWasmClient instance
 func NewMsgCreateWasmClient(
-	id string, header Header,
+	id string, header json.RawMessage,
 	trustingPeriod, unbondingPeriod, maxClockDrift time.Duration, signer sdk.AccAddress, wasmId int,
 ) MsgCreateWasmClient {
 	return MsgCreateWasmClient{
 		ClientID:        id,
 		Header:          header,
-		Message:         "DEFAULT",
 		TrustingPeriod:  trustingPeriod,
 		UnbondingPeriod: unbondingPeriod,
 		MaxClockDrift: maxClockDrift,
@@ -133,29 +133,37 @@ func (msg MsgCreateWasmClient) GetClientType() string {
 // GetConsensusState implements clientexported.MsgCreateWasmClient
 func (msg MsgCreateWasmClient) GetConsensusState() clientexported.ConsensusState {
 	// Construct initial consensus state from provided Header
-	root := commitmenttypes.NewMerkleRoot(msg.Header.AppHash)
+	root := commitmenttypes.NewMerkleRoot(msg.Header)
 	return ConsensusState{
-		Timestamp:    msg.Header.Time,
+		Timestamp:    time.Now(),
 		Root:         root,
-		Height:       uint64(msg.Header.Height),
-		ValidatorSet: msg.Header.ValidatorSet,
+		Height:       0,
+		ValidatorSet: nil,
 	}
 }
 
 // MsgUpdateWasmClient defines a message to update an IBC client
 type MsgUpdateWasmClient struct {
 	ClientID string         `json:"client_id" yaml:"client_id"`
-	Header   Header         `json:"header" yaml:"header"`
+	Header   []byte         `json:"header" yaml:"header"`
 	Signer   sdk.AccAddress `json:"address" yaml:"address"`
 }
 
 // NewMsgUpdateWasmClient creates a new MsgUpdateWasmClient instance
-func NewMsgUpdateWasmClient(id string, header Header, signer sdk.AccAddress) MsgUpdateWasmClient {
+func NewMsgUpdateWasmClient(id string, header []byte, signer sdk.AccAddress) MsgUpdateWasmClient {
 	return MsgUpdateWasmClient{
 		ClientID: id,
 		Header:   header,
 		Signer:   signer,
 	}
+}
+
+func (m MsgUpdateWasmClient) GetClientType() string {
+	return clientexported.ClientTypeWasm
+}
+
+func (m MsgUpdateWasmClient) GetConsensusState() ConsensusState {
+	return ConsensusState{}
 }
 
 // Route implements sdk.Msg
@@ -193,9 +201,20 @@ func (msg MsgUpdateWasmClient) GetClientID() string {
 
 // GetHeader implements clientexported.MsgUpdateWasmClient
 func (msg MsgUpdateWasmClient) GetHeader() clientexported.Header {
-	return msg.Header
+	return WasmHeader{msg.Header}
 }
 
+type WasmHeader struct {
+	Data []byte
+}
+
+func (h WasmHeader) ClientType() clientexported.ClientType {
+	return clientexported.Wasm
+}
+
+func (h WasmHeader) GetHeight() uint64 {
+	return 0
+}
 // MsgSubmitWasmClientMisbehaviour defines an sdk.Msg type that supports submitting
 // Evidence for client misbehaviour.
 type MsgSubmitWasmClientMisbehaviour struct {
@@ -321,9 +340,9 @@ func validateBuilder(buildTag string) error {
 
 type MsgWrappedData struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
-	Target Address        `json:"target" yaml:"target"`
+	ClientId string       `json:"client_id" yaml:"client_id"`
 	// Data can be gzipped or raw.
-	Data []byte `json:"data" yaml:"data"`
+	Data json.RawMessage `json:"data" yaml:"data"`
 }
 
 func (msg MsgWrappedData) Route() string {

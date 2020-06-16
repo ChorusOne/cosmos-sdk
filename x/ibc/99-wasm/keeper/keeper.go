@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 
-	//"github.com/Workiva/go-datastructures/threadsafe/err"
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 
 	wasm "github.com/confio/go-cosmwasm"
@@ -57,22 +57,18 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey) Keeper {
 
 // Create uploads and compiles a WASM contract, returning a short identifier for the contract
 func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string) (codeID uint64, err error) {
-	fmt.Println("DEBUG1")
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	fmt.Println("DEBUG2")
 	codeHash, err := k.wasmer.Create(wasmCode)
 	if err != nil {
 		// return 0, sdkerrors.Wrap(err, "cosmwasm create")
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	fmt.Println("DEBUG3")
 	store := ctx.KVStore(k.storeKey)
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
 	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder)
-	fmt.Println("DEBUG4")
 	// 0x01 | codeID (uint64) -> ContractInfo
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
 
@@ -88,21 +84,16 @@ func isSimulationMode(ctx sdk.Context) bool {
 func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, label string) (types.Address, error) {
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
-	ctx.Logger().Error("Debug 1", codeID, creator, initMsg)
-	// get contact info
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetCodeKey(codeID))
 	if bz == nil {
 		return nil, sdkerrors.Wrap(types.ErrNotFound, "code")
 	}
-	ctx.Logger().Error("Debug 2")
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
-	ctx.Logger().Error("Debug 3", codeID, codeInfo)
 
 	// prepare params for contract instantiate call
 	params := types.NewParams(ctx, creator, contractAddress)
-	ctx.Logger().Error("Debug 4", params)
 
 	// create prefixed data store
 	// 0x03 | contractAddress (sdk.AccAddress)
@@ -111,8 +102,15 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 
 	// instantiate wasm contract
 	gas := gasForContract(ctx)
-	ctx.Logger().Error("Debug 5", prefixStoreKey)
-	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, cosmwasmAPI, gas)
+
+	var payload map[string]string
+	err := json.Unmarshal(initMsg, &payload)
+	payload["name"] = "testtestest"
+	pyld, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, pyld, prefixStore, cosmwasmAPI, gas)
 	if err != nil {
 		ctx.Logger().Error("Got an error :(", err.Error())
 		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())

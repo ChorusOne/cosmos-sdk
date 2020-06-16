@@ -89,7 +89,8 @@ func (cs ClientState) GetID() string {
 
 // GetChainID returns the chain-id from the last header
 func (cs ClientState) GetChainID() string {
-	return cs.LastHeader.ChainID
+	//return cs.LastHeader.ChainID
+	return "FIXME"
 }
 
 // ClientType is tendermint.
@@ -99,12 +100,12 @@ func (cs ClientState) ClientType() clientexported.ClientType {
 
 // GetLatestHeight returns latest block height.
 func (cs ClientState) GetLatestHeight() uint64 {
-	return uint64(cs.LastHeader.Height)
+	return uint64(cs.LastHeader.GetHeight())
 }
 
 // GetLatestTimestamp returns latest block time.
 func (cs ClientState) GetLatestTimestamp() time.Time {
-	return cs.LastHeader.Time
+	return time.Now()//cs.LastHeader.Time
 }
 
 // IsFrozen returns true if the frozen height has been set.

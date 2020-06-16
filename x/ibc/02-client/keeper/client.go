@@ -95,8 +95,8 @@ func (k Keeper) UpdateClient(ctx sdk.Context, clientID string, header exported.H
 			ctx.BlockHeight(),
 		)
 	case exported.Wasm:
-		clientState, consensusState, err = wasm.CheckValidityAndUpdateState(
-			clientState, header, ctx.BlockTime(),
+		clientState, consensusState, err = wasm.CheckValidityAndUpdateState(ctx, &k.WasmKeeper,
+			clientState, header,
 		)
 	default:
 		err = types.ErrInvalidClientType

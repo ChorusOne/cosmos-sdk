@@ -136,7 +136,7 @@ $ %s tx ibc client create [client-id] [path/to/consensus_state.json] [trusting_p
 				return err
 			}
 
-			msg := ibcwasmtypes.NewMsgCreateWasmClient(clientID, header, trustingPeriod, ubdPeriod, maxClockDrift, cliCtx.GetFromAddress(), wasmId)
+			msg := ibcwasmtypes.NewMsgCreateWasmClient(clientID, header.Data, trustingPeriod, ubdPeriod, maxClockDrift, cliCtx.GetFromAddress(), wasmId)
 
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -180,7 +180,7 @@ $ %s tx ibc client update [client-id] [path/to/header.json] --from node0 --home 
 				}
 			}
 
-			msg := ibcwasmtypes.NewMsgUpdateWasmClient(clientID, header, cliCtx.GetFromAddress())
+			msg := ibcwasmtypes.NewMsgUpdateWasmClient(clientID, header.Data, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

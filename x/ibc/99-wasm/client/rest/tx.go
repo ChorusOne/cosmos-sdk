@@ -52,7 +52,7 @@ func createClientHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// create the message
 		msg := ibcwasmtypes.NewMsgCreateWasmClient(
 			req.ClientID,
-			ibcwasmtypes.Header(req.Header),
+			[]byte{},
 			req.TrustingPeriod, req.UnbondingPeriod, req.MaxClockDrift,
 			fromAddr, req.WasmId,
 		)
