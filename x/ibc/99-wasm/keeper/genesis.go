@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc/99-wasm/types"
 	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	// "github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	// "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
 // InitGenesis sets supply information for genesis.

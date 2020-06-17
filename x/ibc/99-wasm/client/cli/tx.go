@@ -3,7 +3,7 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	wasmUtils "github.com/cosmwasm/wasmd/x/wasm/client/utils"
+	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"strconv"

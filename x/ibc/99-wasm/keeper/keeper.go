@@ -7,8 +7,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 
-	wasm "github.com/confio/go-cosmwasm"
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasm "github.com/CosmWasm/go-cosmwasm"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmd "github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,7 +42,7 @@ type Keeper struct {
 // NewKeeper creates a new contract Keeper instance
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey) Keeper {
 	wasmConfig := types.DefaultWasmConfig()
-	wasmer, err := wasm.NewWasmer(wasmConfig.HomeDir, wasmConfig.CacheSize)
+	wasmer, err := wasm.NewWasmer(wasmConfig.HomeDir, "staking", wasmConfig.CacheSize)
 	if err != nil {
 		panic(err)
 	}
@@ -102,7 +103,10 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 
 	// instantiate wasm contract
 	gas := gasForContract(ctx)
-
+	querier := wasmd.QueryHandler{
+		Ctx:     ctx,
+		Plugins: wasmd.QueryPlugins{},
+	}
 	var payload map[string]interface{}
 	err := json.Unmarshal(initMsg, &payload)
 	payload["name"] = "testtestest"
@@ -111,7 +115,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	if err != nil {
 		return nil, err
 	}
-	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, pyld, prefixStore, cosmwasmAPI, gas)
+	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, pyld, prefixStore, cosmwasmAPI, querier, gas)
 	if err != nil {
 		ctx.Logger().Error("Got an error :(", err.Error())
 		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
@@ -154,8 +158,12 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress types.Address, caller s
 
 	params := types.NewParams(ctx, caller, contractAddress)
 
+	querier := wasmd.QueryHandler{
+		Ctx:     ctx,
+		Plugins: wasmd.QueryPlugins{},
+	}
 	gas := gasForContract(ctx)
-	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, gas)
+	res, execErr := k.wasmer.Execute(codeInfo.Code, params, msg, prefixStore, cosmwasmAPI, querier, gas)
 	if execErr != nil {
 		// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
 		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())

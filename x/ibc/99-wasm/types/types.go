@@ -6,7 +6,7 @@ import (
 
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -110,21 +110,28 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 
 // NewParams initializes params for a contract instance
 func NewParams(ctx sdk.Context, creator sdk.AccAddress, contract Address) wasmTypes.Env {
-	return wasmTypes.Env{
+	// safety checks before casting below
+	if ctx.BlockHeight() < 0 {
+		panic("Block height must never be negative")
+	}
+	if ctx.BlockTime().Unix() < 0 {
+		panic("Block (unix) time must never be negative ")
+	}
+	env := wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
-			Height:  ctx.BlockHeight(),
-			Time:    ctx.BlockTime().Unix(),
+			Height:  uint64(ctx.BlockHeight()),
+			Time:    uint64(ctx.BlockTime().Unix()),
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Signer:    wasmTypes.CanonicalAddress(creator),
-			SentFunds: []wasmTypes.Coin{},
+			Sender:    wasmTypes.CanonicalAddress(creator),
+			SentFunds: wasmTypes.Coins{},
 		},
 		Contract: wasmTypes.ContractInfo{
 			Address: wasmTypes.CanonicalAddress(contract),
-			Balance: []wasmTypes.Coin{},
 		},
 	}
+	return env
 }
 
 const CustomEventType = "wasm"

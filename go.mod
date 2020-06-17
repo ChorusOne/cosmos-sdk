@@ -2,12 +2,12 @@ module github.com/cosmos/cosmos-sdk
 
 require (
 	github.com/99designs/keyring v1.1.4
+	github.com/CosmWasm/go-cosmwasm v0.8.1
+	github.com/CosmWasm/wasmd v0.8.1
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/btcsuite/btcd v0.20.1-beta
-	github.com/confio/go-cosmwasm v0.7.2
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
 	github.com/cosmos/ledger-cosmos-go v0.11.1
-	github.com/cosmwasm/wasmd v0.7.1
 	github.com/gibson042/canonicaljson-go v1.0.3
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.4.3
