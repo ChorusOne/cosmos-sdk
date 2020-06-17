@@ -103,9 +103,10 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	// instantiate wasm contract
 	gas := gasForContract(ctx)
 
-	var payload map[string]string
+	var payload map[string]interface{}
 	err := json.Unmarshal(initMsg, &payload)
 	payload["name"] = "testtestest"
+	payload["max_non_finalized_blocks_allowed"] = 256
 	pyld, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
