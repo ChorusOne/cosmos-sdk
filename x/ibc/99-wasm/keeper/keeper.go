@@ -3,13 +3,12 @@ package keeper
 import (
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
+	//"fmt"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/exported"
+	//"github.com/cosmos/cosmos-sdk/x/auth/exported"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
-	wasmd "github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
+	//wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -103,9 +102,9 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 
 	// instantiate wasm contract
 	gas := gasForContract(ctx)
-	querier := wasmd.QueryHandler{
+	querier := QueryHandler{
 		Ctx:     ctx,
-		Plugins: wasmd.QueryPlugins{},
+		Plugins: QueryPlugins{},
 	}
 	var payload map[string]interface{}
 	err := json.Unmarshal(initMsg, &payload)
@@ -158,12 +157,12 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress types.Address, caller s
 
 	params := types.NewParams(ctx, caller, contractAddress)
 
-	querier := wasmd.QueryHandler{
+	querier := QueryHandler{
 		Ctx:     ctx,
-		Plugins: wasmd.QueryPlugins{},
+		Plugins: QueryPlugins{},
 	}
 	gas := gasForContract(ctx)
-	res, execErr := k.wasmer.Execute(codeInfo.Code, params, msg, prefixStore, cosmwasmAPI, querier, gas)
+	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gas)
 	if execErr != nil {
 		// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
 		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -192,7 +191,12 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr types.Address, req []by
 	if err != nil {
 		return nil, err
 	}
-	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, cosmwasmAPI, gasForContract(ctx))
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: QueryPlugins{},
+	}
+
+	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, cosmwasmAPI, querier, gasForContract(ctx))
 	if qErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrQueryFailed, qErr.Error())
 	}
@@ -304,102 +308,41 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 	return k.wasmer.GetCode(codeInfo.CodeHash)
 }
 
-func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msgs []wasmTypes.CosmosMsg) error {
-	for _, msg := range msgs {
-		if err := k.dispatchMessage(ctx, contract, msg); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
-	// maybe use this instead for the arg?
-	contractAddr := contract.GetAddress()
-	if msg.Send != nil {
-		//return k.sendTokens(ctx, contractAddr, msg.Send.FromAddress, msg.Send.ToAddress, msg.Send.Amount)
-	} else if msg.Contract != nil {
-		targetAddr, stderr := types.AddressFromString(msg.Contract.ContractAddr)
-		if stderr != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Contract.ContractAddr)
-		}
-		//sentFunds, err := convertWasmCoinToSdkCoin(msg.Contract.Send)
-		//if err != nil {
-		//	return err
-		//}
-		_, err := k.Execute(ctx, targetAddr, contractAddr, msg.Contract.Msg)
-		return err // may be nil
-	} else if msg.Opaque != nil {
-		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)
-		if err != nil {
-			return err
-		}
-		return k.handleSdkMessage(ctx, contractAddr, msg)
-	}
-	// what is it?
-	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))
-}
-
-// func convertCosmosSendMsg(from string, to string, coins []wasmTypes.Coin) (bank.MsgSend, error) {
-// 	fromAddr, stderr := sdk.AccAddressFromBech32(from)
-// 	if stderr != nil {
-// 		return bank.MsgSend{}, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, from)
-// 	}
-// 	toAddr, stderr := sdk.AccAddressFromBech32(to)
-// 	if stderr != nil {
-// 		return bank.MsgSend{}, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, to)
-// 	}
+//func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msgs []wasmTypes.CosmosMsg) error {
+//	for _, msg := range msgs {
+//		if err := k.dispatchMessage(ctx, contract, msg); err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 //
-// 	toSend, err := convertWasmCoinToSdkCoin(coins)
-// 	if err != nil {
-// 		return bank.MsgSend{}, err
-// 	}
-// 	sendMsg := bank.MsgSend{
-// 		FromAddress: fromAddr,
-// 		ToAddress:   toAddr,
-// 		Amount:      toSend,
-// 	}
-// 	return sendMsg, nil
-// }
-
-func convertWasmCoinToSdkCoin(coins []wasmTypes.Coin) (sdk.Coins, error) {
-	var toSend sdk.Coins
-	for _, coin := range coins {
-		amount, ok := sdk.NewIntFromString(coin.Amount)
-		if !ok {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
-		}
-		c := sdk.Coin{
-			Denom:  coin.Denom,
-			Amount: amount,
-		}
-		toSend = append(toSend, c)
-	}
-	return toSend, nil
-}
-
-func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) error {
-	// make sure this account can send it
-	for _, acct := range msg.GetSigners() {
-		if !acct.Equals(contractAddr) {
-			return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
-		}
-	}
-
-	// find the handler and execute it
-	h := k.router.Route(ctx, msg.Route())
-	if h == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.Route())
-	}
-	//res, err := h(ctx, msg)
-	//if err != nil {
-	//	return err
-	//}
-	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-	//ctx.EventManager().EmitEvents(res.Events)
-
-	return nil
-}
+//func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
+//	// maybe use this instead for the arg?
+//	contractAddr := contract.GetAddress()
+//	if msg.Bank.Send != nil {
+//		//return k.sendTokens(ctx, contractAddr, msg.Send.FromAddress, msg.Send.ToAddress, msg.Send.Amount)
+//	} else if msg.Wasm.Contract != nil {
+//		targetAddr, stderr := types.AddressFromString(msg.Contract.ContractAddr)
+//		if stderr != nil {
+//			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Contract.ContractAddr)
+//		}
+//		//sentFunds, err := convertWasmCoinToSdkCoin(msg.Contract.Send)
+//		//if err != nil {
+//		//	return err
+//		//}
+//		_, err := k.Execute(ctx, targetAddr, contractAddr, msg.Contract.Msg)
+//		return err // may be nil
+//	} else if msg.Opaque != nil {
+//		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)
+//		if err != nil {
+//			return err
+//		}
+//		return k.handleSdkMessage(ctx, contractAddr, msg)
+//	}
+//	// what is it?
+//	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))
+//}
 
 func gasForContract(ctx sdk.Context) uint64 {
 	meter := ctx.GasMeter()
