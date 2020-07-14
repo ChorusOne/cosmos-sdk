@@ -49,7 +49,9 @@ func CheckValidityAndUpdateState(
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println(result)
+	for _, i := range result.Events {
+		ctx.Logger().Info(i.String())
+	}
 	//if !ok {
 	//	return nil, nil, sdkerrors.Wrap(
 	//		clienttypes.ErrInvalidClientType, "light client is not from Tendermint",

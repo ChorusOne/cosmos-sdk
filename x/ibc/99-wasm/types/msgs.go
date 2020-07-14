@@ -144,9 +144,9 @@ func (msg MsgCreateWasmClient) GetConsensusState() clientexported.ConsensusState
 
 // MsgUpdateWasmClient defines a message to update an IBC client
 type MsgUpdateWasmClient struct {
-	ClientID string         `json:"client_id" yaml:"client_id"`
-	Header   []byte         `json:"header" yaml:"header"`
-	Signer   sdk.AccAddress `json:"address" yaml:"address"`
+	ClientID string         	`json:"client_id" yaml:"client_id"`
+	Header   json.RawMessage  `json:"header" yaml:"header"`
+	Signer   sdk.AccAddress 	`json:"address" yaml:"address"`
 }
 
 // NewMsgUpdateWasmClient creates a new MsgUpdateWasmClient instance

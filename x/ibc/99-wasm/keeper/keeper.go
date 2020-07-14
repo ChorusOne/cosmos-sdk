@@ -81,7 +81,7 @@ func isSimulationMode(ctx sdk.Context) bool {
 }
 
 // Instantiate creates an instance of a WASM contract
-func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, label string) (types.Address, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, clientId string, codeID uint64, creator sdk.AccAddress, initMsg []byte, label string) (types.Address, error) {
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
 	store := ctx.KVStore(k.storeKey)
@@ -108,8 +108,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 	var payload map[string]interface{}
 	err := json.Unmarshal(initMsg, &payload)
-	payload["name"] = "testtestest"
-	payload["max_non_finalized_blocks_allowed"] = 256
+	payload["name"] = clientId
+	payload["max_non_finalized_blocks_allowed"] = 3
 	pyld, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
