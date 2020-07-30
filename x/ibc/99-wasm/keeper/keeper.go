@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/bzip2"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -124,9 +125,13 @@ func (k Keeper) Instantiate(ctx sdk.Context, clientId string, codeID uint64, cre
 	}
 
 	// Decompressing compressed data and merging with main payload
-	compressedData, ok := payload["compressed"].([]byte)
+	compressedHexData, ok := payload["compressed"].(string)
 	if !ok {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to cast compressed data to bytes")
+		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to cast compressed data to string")
+	}
+	compressedData, err := hex.DecodeString(compressedHexData)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to decode hex compressed data to bytes")
 	}
 	compressedDataReader := bzip2.NewReader(bytes.NewReader(compressedData))
 	decompressedData, err := ioutil.ReadAll(compressedDataReader)
@@ -209,9 +214,13 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress types.Address, caller s
 	}
 
 	// Decompressing compressed data and merging with main payload
-	compressedData, ok := payload["compressed"].([]byte)
+	compressedHexData, ok := payload["compressed"].(string)
 	if !ok {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to cast compressed data to bytes")
+		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to cast compressed data to string")
+	}
+	compressedData, err := hex.DecodeString(compressedHexData)
+	if err != nil {
+		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to decode hex compressed data to bytes")
 	}
 	compressedDataReader := bzip2.NewReader(bytes.NewReader(compressedData))
 	decompressedData, err := ioutil.ReadAll(compressedDataReader)
