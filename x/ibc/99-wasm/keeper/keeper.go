@@ -112,22 +112,26 @@ func (k Keeper) Instantiate(ctx sdk.Context, clientId string, codeID uint64, cre
 		Plugins: QueryPlugins{},
 	}
 
+	ctx.Logger().Debug("Received Base64 encoded compressed data")
 	var compressedData []byte
 	_, err := base64.StdEncoding.Decode(compressedData, initMsg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to decode base64 compressed bytes")
 	}
+	ctx.Logger().Debug("Successfully decoded base64 compressed initMsg")
 	compressedDataReader := bzip2.NewReader(bytes.NewReader(compressedData))
 	decompressedInitMsg, err := ioutil.ReadAll(compressedDataReader)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to decompress data")
 	}
+	ctx.Logger().Debug("Successfully decompressed initMsg")
 
 	var payload map[string]interface{}
 	err = json.Unmarshal(decompressedInitMsg, &payload)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to marshal json data")
 	}
+	ctx.Logger().Debug("Successfully unmarshalled initMsg")
 	payload["name"] = clientId
 
 	pyld, err := json.Marshal(payload)
@@ -140,6 +144,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, clientId string, codeID uint64, cre
 		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 		// return contractAddress, sdkerrors.Wrap(err, "cosmwasm instantiate")
 	}
+	ctx.Logger().Debug("Successfully instantiated wasm contract")
 	consumeGas(ctx, res.GasUsed)
 
 	// emit all events from this contract itself
@@ -153,7 +158,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, clientId string, codeID uint64, cre
 
 	// persist instance
 	createdAt := types.NewCreatedAt(ctx)
-	instance := types.NewContractInfo(codeID, creator, initMsg, label, createdAt)
+	instance := types.NewContractInfo(codeID, creator, decompressedInitMsg, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
 
 	return contractAddress, nil
