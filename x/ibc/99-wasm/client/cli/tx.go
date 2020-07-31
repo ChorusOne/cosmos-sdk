@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
 	"github.com/spf13/viper"
@@ -135,8 +136,10 @@ $ %s tx ibc client create [client-id] [path/to/consensus_state.json] [trusting_p
 			if err != nil {
 				return err
 			}
-
-			msg := ibcwasmtypes.NewMsgCreateWasmClient(clientID, header.Data, trustingPeriod, ubdPeriod, maxClockDrift, cliCtx.GetFromAddress(), wasmId)
+			// Since we are now using base64 compressed data in other places
+			// this input is assumed to be compressed and passed in CreateWasmClient as base64 encoded string
+			compressedData := base64.StdEncoding.EncodeToString(header.Data)
+			msg := ibcwasmtypes.NewMsgCreateWasmClient(clientID, compressedData, trustingPeriod, ubdPeriod, maxClockDrift, cliCtx.GetFromAddress(), wasmId)
 
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -179,8 +182,10 @@ $ %s tx ibc client update [client-id] [path/to/header.json] --from node0 --home 
 					return errors.Wrap(err, "error unmarshalling header file")
 				}
 			}
-
-			msg := ibcwasmtypes.NewMsgUpdateWasmClient(clientID, header.Data, cliCtx.GetFromAddress())
+			// Since we are now using base64 compressed data in other places
+			// this input is assumed to be compressed and passed in CreateWasmClient as base64 encoded string
+			compressedData := base64.StdEncoding.EncodeToString(header.Data)
+			msg := ibcwasmtypes.NewMsgUpdateWasmClient(clientID, compressedData, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

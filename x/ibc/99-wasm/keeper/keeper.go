@@ -3,10 +3,9 @@ package keeper
 import (
 	"bytes"
 	"compress/bzip2"
+	"encoding/base64"
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 
 	//"fmt"
@@ -112,43 +111,24 @@ func (k Keeper) Instantiate(ctx sdk.Context, clientId string, codeID uint64, cre
 		Ctx:     ctx,
 		Plugins: QueryPlugins{},
 	}
-	var payload map[string]interface{}
 
-	err := json.Unmarshal(initMsg, &payload)
+	var compressedData []byte
+	_, err := base64.StdEncoding.Decode(compressedData, initMsg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to decode base64 compressed bytes")
+	}
+	compressedDataReader := bzip2.NewReader(bytes.NewReader(compressedData))
+	decompressedInitMsg, err := ioutil.ReadAll(compressedDataReader)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to decompress data")
+	}
+
+	var payload map[string]interface{}
+	err = json.Unmarshal(decompressedInitMsg, &payload)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to marshal json data")
 	}
 	payload["name"] = clientId
-
-	if _, exists := payload["compressed"]; !exists {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "compressed data does not exists in payload")
-	}
-
-	// Decompressing compressed data and merging with main payload
-	compressedHexData, ok := payload["compressed"].(string)
-	if !ok {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to cast compressed data to string")
-	}
-	compressedData, err := hex.DecodeString(compressedHexData)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to decode hex compressed data to bytes")
-	}
-	compressedDataReader := bzip2.NewReader(bytes.NewReader(compressedData))
-	decompressedData, err := ioutil.ReadAll(compressedDataReader)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to decompress data")
-	}
-	var decompressedPayload map[string]interface{}
-	err = json.Unmarshal(decompressedData, &decompressedPayload)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, "unable to marshal decompressed data")
-	}
-	for k, v := range decompressedPayload {
-		if _, exists := payload[k]; exists {
-			return nil, sdkerrors.Wrap(types.ErrInstantiateFailed, fmt.Sprintf("decompressed data contains key %s already existing in main payload", k))
-		}
-		payload[k] = v
-	}
 
 	pyld, err := json.Marshal(payload)
 	if err != nil {
@@ -203,46 +183,17 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress types.Address, caller s
 	}
 	gas := gasForContract(ctx)
 
-	var payload map[string]interface{}
-	err = json.Unmarshal(msg, &payload)
+	var compressedData []byte
+	_, err = base64.StdEncoding.Decode(compressedData, msg)
 	if err != nil {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to marshal json data")
-	}
-
-	if _, exists := payload["compressed"]; !exists {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "compressed data does not exists in payload")
-	}
-
-	// Decompressing compressed data and merging with main payload
-	compressedHexData, ok := payload["compressed"].(string)
-	if !ok {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to cast compressed data to string")
-	}
-	compressedData, err := hex.DecodeString(compressedHexData)
-	if err != nil {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to decode hex compressed data to bytes")
+		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to decode base64 compressed bytes")
 	}
 	compressedDataReader := bzip2.NewReader(bytes.NewReader(compressedData))
-	decompressedData, err := ioutil.ReadAll(compressedDataReader)
+	decompressedMsg, err := ioutil.ReadAll(compressedDataReader)
 	if err != nil {
 		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to decompress data")
 	}
-	var decompressedPayload map[string]interface{}
-	err = json.Unmarshal(decompressedData, &decompressedPayload)
-	if err != nil {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, "unable to marshal decompressed data")
-	}
-	for k, v := range decompressedPayload {
-		payload[k] = v
-	}
-	for k, v := range decompressedPayload {
-		if _, exists := payload[k]; exists {
-			return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, fmt.Sprintf("decompressed data contains key %s already existing in main payload", k))
-		}
-		payload[k] = v
-	}
-
-	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gas)
+	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, decompressedMsg, prefixStore, cosmwasmAPI, querier, gas)
 	if execErr != nil {
 		// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
 		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())

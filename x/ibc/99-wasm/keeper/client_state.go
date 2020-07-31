@@ -27,12 +27,12 @@ func (k *Keeper) Initialize(
 	if trustingPeriod >= ubdPeriod {
 		return ibcwasmtypes.ClientState{}, errors.New("trusting period should be < unbonding period")
 	}
-	contractAddress, err := k.Instantiate(ctx,  initMsg.ClientID, uint64(wasmId), ibcwasmtypes.ModuleAccount, initMsg.Header, fmt.Sprintf("wasm-client-%s-%d", id, wasmId))
+	contractAddress, err := k.Instantiate(ctx, initMsg.ClientID, uint64(wasmId), ibcwasmtypes.ModuleAccount, []byte(initMsg.CompressedHeader), fmt.Sprintf("wasm-client-%s-%d", id, wasmId))
 	if err != nil {
 		return ibcwasmtypes.ClientState{}, err
 	}
 	clientState := ibcwasmtypes.NewClientState(
-		id, trustingPeriod, ubdPeriod, maxClockDrift, ibcwasmtypes.Header{initMsg.Header}, contractAddress,
+		id, trustingPeriod, ubdPeriod, maxClockDrift, ibcwasmtypes.Header{Data: []byte(initMsg.CompressedHeader)}, contractAddress,
 	)
 	return clientState, nil
 }
