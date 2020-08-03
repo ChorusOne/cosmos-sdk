@@ -12,6 +12,10 @@ type QueryClientParams struct {
 	ClientId int `json:"client_id" yaml:"client_id"`
 }
 
+type QueryClientStateParams struct {
+	LatestHeight struct{} `json:"latestheight" yaml:"latestheight"`
+}
+
 // QueryAllClientsParams defines the parameters necessary for querying for all
 // light client states.
 type QueryAllCandidatesParams struct {

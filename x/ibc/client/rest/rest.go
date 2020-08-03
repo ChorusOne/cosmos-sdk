@@ -8,6 +8,7 @@ import (
 	connection "github.com/cosmos/cosmos-sdk/x/ibc/03-connection"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
 	tendermint "github.com/cosmos/cosmos-sdk/x/ibc/07-tendermint"
+	wasm "github.com/cosmos/cosmos-sdk/x/ibc/99-wasm"
 	localhost "github.com/cosmos/cosmos-sdk/x/ibc/09-localhost"
 )
 
@@ -15,6 +16,7 @@ import (
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, queryRoute string) {
 	client.RegisterRESTRoutes(cliCtx, r, queryRoute)
 	tendermint.RegisterRESTRoutes(cliCtx, r, queryRoute)
+	wasm.RegisterRESTRoutes(cliCtx, r, queryRoute)
 	localhost.RegisterRESTRoutes(cliCtx, r, queryRoute)
 	connection.RegisterRESTRoutes(cliCtx, r, queryRoute)
 	channel.RegisterRESTRoutes(cliCtx, r, queryRoute)
