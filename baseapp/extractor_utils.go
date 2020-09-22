@@ -15,12 +15,32 @@ import (
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
+//Denominations represents the list of all denominations at a block height
+type Denominations = []string
+
+var staticSetOfDenominations = map[string]Denominations{
+
+	// Columbus-1 and Columbus-2 had a fixed set of denominations
+	// umnt was added at Nov. 30th. 2019 (end of Columbus-2).
+
+	"columbus-1": []string{"ukrw", "uluna", "usdr", "uusd"},
+	"columbus-2": []string{"ukrw", "uluna", "usdr", "uusd"},
+
+	"cosmoshub-1": []string{"uatom"},
+	"cosmoshub-2": []string{"uatom"},
+}
+
 func recordTxData(app *BaseApp, txBytes []byte, tx sdk.Tx, result abci.ResponseDeliverTx) {
 	ctx := app.getContextForTx(runTxModeDeliver, txBytes)
 	txHash := fmt.Sprintf("%X", tmhash.Sum(txBytes))
 
 	sdktx, _ := tx.(auth.StdTx)
 	jsonTags, _ := codec.Cdc.MarshalJSON(sdk.TagsToStringTags(result.Tags))
+	//Adding empty jsonEvents object for forward compatibility with submitters code
+	//Anthem can check : if jsonEvents is null => use jsonTags
+
+	jsonEvents, _ := codec.Cdc.MarshalJSON(nil)
+
 	jsonMsgs := MsgsToString(sdktx.GetMsgs())
 	jsonFee, _ := codec.Cdc.MarshalJSON(sdktx.Fee)
 	jsonMemo, _ := codec.Cdc.MarshalJSON(sdktx.GetMemo())
@@ -35,7 +55,7 @@ func recordTxData(app *BaseApp, txBytes []byte, tx sdk.Tx, result abci.ResponseD
 	}
 	defer f.Close()
 
-	f.WriteString(fmt.Sprintf("%s,%d,%d,%d,%d,$%s$,$%s$,$%s$,$%s$,$%s$,%s,%s\n",
+	f.WriteString(fmt.Sprintf("%s,%d,%d,%d,%d,$%s$,$%s$,$%s$,$%s$,$%s$,$%s$,%s,%s\n",
 		txHash,
 		ctx.BlockHeight(),
 		uint32(result.Code),
@@ -46,6 +66,7 @@ func recordTxData(app *BaseApp, txBytes []byte, tx sdk.Tx, result abci.ResponseD
 		strings.ReplaceAll(string(jsonFee), "$", "\\$"),
 		strings.ReplaceAll(string(jsonTags), "$", "\\$"),
 		strings.ReplaceAll(string(jsonMsgs), "$", "\\$"),
+		strings.ReplaceAll(string(jsonEvents), "$", "\\$"),
 		ctx.BlockHeader().Time.Format("2006-01-02 15:04:05"),
 		ctx.ChainID()))
 }
@@ -132,7 +153,7 @@ func copyFile(destination string, source string) error {
 }
 
 func commitUncheckedFiles(ctx sdk.Context) {
-	for _, key := range []string{"delegations", "unbond", "balance", "rewards"} {
+	for _, key := range []string{"delegations", "unbond", "balance", "rewards", "commission"} {
 		err := copyFile(fmt.Sprintf("./extract/progress/%s.%d.%s", key, ctx.BlockHeight(), ctx.ChainID()), fmt.Sprintf("./extract/unchecked/%s.%d.%s", key, ctx.BlockHeight(), ctx.ChainID()))
 		if err != nil {
 			panic(fmt.Sprintf("error: (%v) while commiting unchecked file\n", err))
@@ -145,7 +166,7 @@ func commitUncheckedFiles(ctx sdk.Context) {
 }
 
 func deleteUncheckedFiles(ctx sdk.Context) {
-	for _, key := range []string{"delegations", "unbond", "balance", "rewards"} {
+	for _, key := range []string{"delegations", "unbond", "balance", "rewards", "commission"} {
 		if err := os.Remove(fmt.Sprintf("./extract/unchecked/%s.%d.%s", key, ctx.BlockHeight(), ctx.ChainID())); err != nil && !os.IsNotExist(err) {
 			panic(fmt.Sprintf("error: (%v) while removing unchecked file\n", err))
 		}
