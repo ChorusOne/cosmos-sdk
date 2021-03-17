@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 )
 
@@ -52,12 +53,18 @@ func (c *ClientState) Initialize(context sdk.Context, marshaler codec.BinaryMars
 }
 
 func (c *ClientState) CheckHeaderAndUpdateState(context sdk.Context, marshaler codec.BinaryMarshaler, store sdk.KVStore, header exported.Header) (exported.ClientState, exported.ConsensusState, error) {
+	consensusState, err := GetConsensusState(store, marshaler, header.GetHeight())
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(err, "could not get trusted consensus state from clientStore for Header at Height: %s", header.GetHeight())
+	}
+
 	const CheckHeaderAndUpdateState = "checkandupdateclientstate"
 	payload := make(map[string]map[string]interface{})
 	payload[CheckHeaderAndUpdateState] = make(map[string]interface{})
 	inner := payload[CheckHeaderAndUpdateState]
 	inner["me"] = c
 	inner["header"] = header
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -79,12 +86,34 @@ func (c *ClientState) CheckHeaderAndUpdateState(context sdk.Context, marshaler c
 }
 
 func (c *ClientState) CheckMisbehaviourAndUpdateState(context sdk.Context, marshaler codec.BinaryMarshaler, store sdk.KVStore, misbehaviour exported.Misbehaviour) (exported.ClientState, error) {
+	wasmMisbehaviour, ok := misbehaviour.(*Misbehaviour)
+	if !ok {
+		return nil, sdkerrors.Wrapf(
+			clienttypes.ErrInvalidMisbehaviour,
+			"invalid misbehaviour type %T, expected %T", wasmMisbehaviour, &Misbehaviour{},
+		)
+	}
+
+	// Get consensus bytes from clientStore
+	consensusState1, err := GetConsensusState(store, marshaler, wasmMisbehaviour.Header1.Height)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "could not get trusted consensus state from clientStore for Header1 at Height: %s", wasmMisbehaviour.Header1)
+	}
+
+	// Get consensus bytes from clientStore
+	consensusState2, err := GetConsensusState(store, marshaler, wasmMisbehaviour.Header2.Height)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "could not get trusted consensus state from clientStore for Header2 at Height: %s", wasmMisbehaviour.Header2)
+	}
+
 	const CheckMisbehaviourAndUpdateState = "checkmisbehaviourandupdatestate"
 	payload := make(map[string]map[string]interface{})
 	payload[CheckMisbehaviourAndUpdateState] = make(map[string]interface{})
 	inner := payload[CheckMisbehaviourAndUpdateState]
 	inner["me"] = c
-	inner["misbehaviour"] = misbehaviour
+	inner["misbehaviour"] = wasmMisbehaviour
+	inner["consensus_state1"] = consensusState1
+	inner["consensus_state2"] = consensusState2
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -106,12 +135,21 @@ func (c *ClientState) CheckMisbehaviourAndUpdateState(context sdk.Context, marsh
 }
 
 func (c *ClientState) CheckProposedHeaderAndUpdateState(context sdk.Context, marshaler codec.BinaryMarshaler, store sdk.KVStore, header exported.Header) (exported.ClientState, exported.ConsensusState, error) {
+	// get consensus state corresponding to client state to check if the client is expired
+	consensusState, err := GetConsensusState(store, marshaler, c.LatestHeight)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(
+			err, "could not get consensus state from clientstore at height: %d", c.LatestHeight,
+		)
+	}
+
 	const CheckProposedHeaderAndUpdateState = "checkproposedheaderandupdatestate"
 	payload := make(map[string]map[string]interface{})
 	payload[CheckProposedHeaderAndUpdateState] = make(map[string]interface{})
 	inner := payload[CheckProposedHeaderAndUpdateState]
 	inner["me"] = c
 	inner["header"] = header
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -133,6 +171,19 @@ func (c *ClientState) CheckProposedHeaderAndUpdateState(context sdk.Context, mar
 }
 
 func (c *ClientState) VerifyUpgradeAndUpdateState(ctx sdk.Context, cdc codec.BinaryMarshaler, store sdk.KVStore, newClient exported.ClientState, newConsState exported.ConsensusState, proofUpgradeClient, proofUpgradeConsState []byte) (exported.ClientState, exported.ConsensusState, error) {
+	wasmUpgradeConsState, ok := newConsState.(*ConsensusState)
+	if !ok {
+		return nil, nil, sdkerrors.Wrapf(clienttypes.ErrInvalidConsensus, "upgraded consensus state must be Tendermint consensus state. expected %T, got: %T",
+			&ConsensusState{}, wasmUpgradeConsState)
+	}
+
+	// last height of current counterparty chain must be client's latest height
+	lastHeight := c.LatestHeight
+	lastHeightConsensusState, err := GetConsensusState(store, cdc, lastHeight)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrap(err, "could not retrieve consensus state for lastHeight")
+	}
+
 	const VerifyUpgradeAndUpdateState = "verifyupgradeandupdatestate"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyUpgradeAndUpdateState] = make(map[string]interface{})
@@ -142,6 +193,7 @@ func (c *ClientState) VerifyUpgradeAndUpdateState(ctx sdk.Context, cdc codec.Bin
 	inner["new_consensus_state"] = newConsState
 	inner["client_upgrade_proof"] = proofUpgradeClient
 	inner["consensus_state_upgrade_proof"] = proofUpgradeConsState
+	inner["last_height_consensus_state"] = lastHeightConsensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
