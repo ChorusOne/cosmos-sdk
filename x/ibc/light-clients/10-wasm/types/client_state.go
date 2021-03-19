@@ -53,7 +53,7 @@ func (c *ClientState) Initialize(context sdk.Context, marshaler codec.BinaryMars
 }
 
 func (c *ClientState) CheckHeaderAndUpdateState(context sdk.Context, marshaler codec.BinaryMarshaler, store sdk.KVStore, header exported.Header) (exported.ClientState, exported.ConsensusState, error) {
-	consensusState, err := GetConsensusState(store, marshaler, header.GetHeight())
+	consensusState, err := GetConsensusState(store, marshaler, c.LatestHeight)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(err, "could not get trusted consensus state from clientStore for Header at Height: %s", header.GetHeight())
 	}
@@ -301,27 +301,7 @@ func (c *ClientState) Validate() error {
 }
 
 func (c *ClientState) GetProofSpecs() []*ics23.ProofSpec {
-	const GetProofSpecsQuery = "getproofspecs"
-	payload := make(map[string]map[string]interface{})
-	payload[GetProofSpecsQuery] = make(map[string]interface{})
-	inner := payload[GetProofSpecsQuery]
-	inner["me"] = c
-
-	encodedData, err := json.Marshal(payload)
-	if err != nil {
-		// TODO: Handle error
-	}
-	response, err := queryContract(c.CodeId, encodedData)
-	if err != nil {
-		// TODO: Handle error
-	}
-
-	output := queryResponse{}
-	if err := json.Unmarshal(response, &output); err != nil {
-		// TODO: Handle error
-	}
-
-	return output.ProofSpecs
+	return c.ProofSpecs
 }
 
 func (c *ClientState) VerifyClientState(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, prefix exported.Prefix, counterpartyClientIdentifier string, proof []byte, clientState exported.ClientState) error {

@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "ibc/core/client/v1/client.proto";
 import "ibc/core/commitment/v1/commitment.proto";
 import "google/protobuf/timestamp.proto";
+import "confio/proofs.proto";
 
 option go_package = "github.com/cosmos/cosmos-sdk/x/ibc/light-clients/10-wasm/types";
 
@@ -17,6 +18,7 @@ message ClientState {
   ibc.core.client.v1.Height frozen_height = 4;
   ibc.core.client.v1.Height latest_height = 5;
   string                    type          = 6;
+  repeated ics23.ProofSpec proof_specs    = 7;
 }
 
 // WASM light client's ConsensusState
