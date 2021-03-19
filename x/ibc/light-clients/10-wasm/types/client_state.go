@@ -339,6 +339,11 @@ func (c *ClientState) VerifyClientState(store sdk.KVStore, cdc codec.BinaryMarsh
 }
 
 func (c *ClientState) VerifyClientConsensusState(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, counterpartyClientIdentifier string, consensusHeight exported.Height, prefix exported.Prefix, proof []byte, consensusState exported.ConsensusState) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
+
 	const VerifyClientConsensusStateQuery = "verifyclientconsensusstate"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyClientConsensusStateQuery] = make(map[string]interface{})
@@ -350,6 +355,7 @@ func (c *ClientState) VerifyClientConsensusState(store sdk.KVStore, cdc codec.Bi
 	inner["counterparty_client_identifier"] = counterpartyClientIdentifier
 	inner["proof"] = proof
 	inner["counterparty_consensus_state"] = consensusState
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -373,6 +379,11 @@ func (c *ClientState) VerifyClientConsensusState(store sdk.KVStore, cdc codec.Bi
 }
 
 func (c *ClientState) VerifyConnectionState(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, prefix exported.Prefix, proof []byte, connectionID string, connectionEnd exported.ConnectionI) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
+
 	const VerifyConnectionStateQuery = "verifyconnectionstate"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyConnectionStateQuery] = make(map[string]interface{})
@@ -383,6 +394,7 @@ func (c *ClientState) VerifyConnectionState(store sdk.KVStore, cdc codec.BinaryM
 	inner["proof"] = proof
 	inner["connection_id"] = connectionID
 	inner["connection_end"] = connectionEnd
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -406,6 +418,11 @@ func (c *ClientState) VerifyConnectionState(store sdk.KVStore, cdc codec.BinaryM
 }
 
 func (c *ClientState) VerifyChannelState(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, prefix exported.Prefix, proof []byte, portID, channelID string, channel exported.ChannelI) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
+
 	const VerifyChannelStateQuery = "verifychannelstate"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyChannelStateQuery] = make(map[string]interface{})
@@ -417,6 +434,7 @@ func (c *ClientState) VerifyChannelState(store sdk.KVStore, cdc codec.BinaryMars
 	inner["port_id"] = portID
 	inner["channel_id"] = channelID
 	inner["channel"] = channel
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -440,6 +458,11 @@ func (c *ClientState) VerifyChannelState(store sdk.KVStore, cdc codec.BinaryMars
 }
 
 func (c *ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, commitmentBytes []byte) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
+
 	const VerifyPacketCommitmentQuery = "verifypacketcommitment"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyPacketCommitmentQuery] = make(map[string]interface{})
@@ -454,6 +477,7 @@ func (c *ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc codec.Binary
 	inner["delay_period"] = delayPeriod
 	inner["sequence"] = sequence
 	inner["commitment_bytes"] = commitmentBytes
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -478,6 +502,11 @@ func (c *ClientState) VerifyPacketCommitment(store sdk.KVStore, cdc codec.Binary
 }
 
 func (c *ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64, acknowledgement []byte) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
+
 	const VerifyPacketAcknowledgementQuery = "verifypacketacknowledgement"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyPacketAcknowledgementQuery] = make(map[string]interface{})
@@ -492,6 +521,7 @@ func (c *ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc codec.B
 	inner["delay_period"] = delayPeriod
 	inner["sequence"] = sequence
 	inner["acknowledgement"] = acknowledgement
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -515,6 +545,11 @@ func (c *ClientState) VerifyPacketAcknowledgement(store sdk.KVStore, cdc codec.B
 }
 
 func (c *ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, sequence uint64) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
+
 	const VerifyPacketReceiptAbsenceQuery = "verifypacketreceiptabsence"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyPacketReceiptAbsenceQuery] = make(map[string]interface{})
@@ -528,6 +563,7 @@ func (c *ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc codec.Bi
 	inner["current_timestamp"] = currentTimestamp
 	inner["delay_period"] = delayPeriod
 	inner["sequence"] = sequence
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
@@ -551,6 +587,11 @@ func (c *ClientState) VerifyPacketReceiptAbsence(store sdk.KVStore, cdc codec.Bi
 }
 
 func (c *ClientState) VerifyNextSequenceRecv(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, currentTimestamp uint64, delayPeriod uint64, prefix exported.Prefix, proof []byte, portID, channelID string, nextSequenceRecv uint64) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
+
 	const VerifyNextSequenceRecvQuery = "verifynextsequencerecv"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyNextSequenceRecvQuery] = make(map[string]interface{})
@@ -564,6 +605,7 @@ func (c *ClientState) VerifyNextSequenceRecv(store sdk.KVStore, cdc codec.Binary
 	inner["current_timestamp"] = currentTimestamp
 	inner["delay_period"] = delayPeriod
 	inner["next_sequence_recv"] = nextSequenceRecv
+	inner["consensus_state"] = consensusState
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
