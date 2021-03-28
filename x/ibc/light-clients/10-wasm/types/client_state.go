@@ -12,10 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 )
 
-/**
-Following are functions that modifies state, so should be part of handle call
- */
-
 
 func (c *ClientState) Initialize(context sdk.Context, marshaler codec.BinaryMarshaler, store sdk.KVStore, state exported.ConsensusState) error {
 	const InitializeState = "initializestate"
@@ -29,6 +25,9 @@ func (c *ClientState) Initialize(context sdk.Context, marshaler codec.BinaryMars
 	if err != nil {
 		return sdkerrors.Wrapf(ErrUnableToMarshalPayload, fmt.Sprintf("underlying error: %s", err.Error()))
 	}
+
+	// Under the hood there are two calls to wasm contract for initialization as by design
+	// cosmwasm does not allow init call to return any value.
 
 	_, err = initContract(c.CodeId, context, store, encodedData)
 	if err != nil {

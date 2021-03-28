@@ -56,6 +56,7 @@ func (r *clientStateCallResponse) resetImmutables(c *ClientState) {
 	}
 }
 
+// Calls vm.Init with appropriate arguments
 func initContract(codeId []byte, ctx sdk.Context, store sdk.KVStore, msg []byte) (*types.InitResponse, error) {
 	gasMeter := ctx.GasMeter()
 	chainID := ctx.BlockHeader().ChainID
@@ -93,6 +94,7 @@ func initContract(codeId []byte, ctx sdk.Context, store sdk.KVStore, msg []byte)
 	return response, err
 }
 
+// Calls vm.Execute with internally constructed Gas meter and environment
 func callContract(codeId []byte, ctx sdk.Context, store sdk.KVStore, msg []byte) (*types.HandleResponse, error) {
 	gasMeter := ctx.GasMeter()
 	chainID := ctx.BlockHeader().ChainID
@@ -121,6 +123,7 @@ func callContract(codeId []byte, ctx sdk.Context, store sdk.KVStore, msg []byte)
 	return callContractWithEnvAndMeter(codeId, &ctx, store, env, gasMeter, msg)
 }
 
+// Calls vm.Execute with supplied environment and gas meter
 func callContractWithEnvAndMeter(codeId []byte, ctx *sdk.Context, store sdk.KVStore, env types.Env, gasMeter sdk.GasMeter, msg []byte) (*types.HandleResponse, error) {
 	msgInfo := types.MessageInfo{
 		Sender:  "",
