@@ -41,7 +41,7 @@ func NewKeeper(
 	connectionKeeper := connectionkeeper.NewKeeper(cdc, key, clientKeeper)
 	portKeeper := portkeeper.NewKeeper(scopedKeeper)
 	channelKeeper := channelkeeper.NewKeeper(cdc, key, clientKeeper, connectionKeeper, portKeeper, scopedKeeper)
-	wasmKeeper := wasmkeeper.NewKeeper(cdc, key, &wasmkeeper.WASMValidationConfig{
+	wasmKeeper := wasmkeeper.NewKeeper(cdc, key, paramSpace, &wasmkeeper.WASMValidationConfig{
 		MaxSizeAllowed: 1024*1024,
 	})
 

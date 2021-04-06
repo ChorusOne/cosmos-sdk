@@ -10,3 +10,8 @@ message WasmCodeEntry {
   string previous_code_hash = 2;
   string next_code_hash     = 3;
 }
+
+// Params for wasm keeper
+message Params {
+  bool wasm_client_enabled = 1;
+}
