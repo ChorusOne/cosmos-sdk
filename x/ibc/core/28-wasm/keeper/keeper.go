@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	wasm "github.com/CosmWasm/wasmvm"
 
@@ -28,10 +27,9 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 	cdc      codec.BinaryMarshaler
 	wasmValidator *WASMValidator
-	paramSpace    paramtypes.Subspace
 }
 
-func NewKeeper(cdc codec.BinaryMarshaler, key sdk.StoreKey, paramSpace paramtypes.Subspace, validationConfig *WASMValidationConfig) Keeper {
+func NewKeeper(cdc codec.BinaryMarshaler, key sdk.StoreKey, validationConfig *WASMValidationConfig) Keeper {
 	// TODO: Make this configurable
 	vm, err := wasm.NewVM("wasm_data", "staking", 8, true, 8)
 	if err != nil {
@@ -48,7 +46,6 @@ func NewKeeper(cdc codec.BinaryMarshaler, key sdk.StoreKey, paramSpace paramtype
 	WasmVM = vm
 
 	return Keeper{
-		paramSpace: paramSpace,
 		cdc: cdc,
 		storeKey: key,
 		wasmValidator: wasmValidator,
