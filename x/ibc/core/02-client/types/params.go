@@ -29,7 +29,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams(wasmClientAllowed bool, allowedClients ...string) Params {
 	return Params{
 		WasmClientsEnabled: wasmClientAllowed,
-		AllowedClients: allowedClients,
+		AllowedClients:     allowedClients,
 	}
 }
 
@@ -52,6 +52,7 @@ func (p Params) Validate() error {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyAllowedClients, p.AllowedClients, validateClients),
+		paramtypes.NewParamSetPair(KeyWasmClientsEnabled, p.WasmClientsEnabled, validateWasmClientEnabledFlag),
 	}
 }
 

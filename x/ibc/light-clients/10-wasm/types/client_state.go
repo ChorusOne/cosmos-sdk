@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 )
 
-
 func (c *ClientState) Initialize(context sdk.Context, marshaler codec.BinaryMarshaler, store sdk.KVStore, state exported.ConsensusState) error {
 	const InitializeState = "initializestate"
 	payload := make(map[string]map[string]interface{})
@@ -57,7 +56,7 @@ func (c *ClientState) CheckHeaderAndUpdateState(context sdk.Context, marshaler c
 		return nil, nil, sdkerrors.Wrapf(err, "could not get trusted consensus state from clientStore for Header at Height: %s", header.GetHeight())
 	}
 
-	const CheckHeaderAndUpdateState = "checkandupdateclientstate"
+	const CheckHeaderAndUpdateState = "checkheaderandupdatestate"
 	payload := make(map[string]map[string]interface{})
 	payload[CheckHeaderAndUpdateState] = make(map[string]interface{})
 	inner := payload[CheckHeaderAndUpdateState]
@@ -238,10 +237,9 @@ func (c *ClientState) ZeroCustomFields() exported.ClientState {
 	return output.Me
 }
 
-
 /**
 Following functions only queries the state so should be part of query call
- */
+*/
 
 func (c *ClientState) ClientType() string {
 	return c.Type
@@ -304,6 +302,10 @@ func (c *ClientState) GetProofSpecs() []*ics23.ProofSpec {
 }
 
 func (c *ClientState) VerifyClientState(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, prefix exported.Prefix, counterpartyClientIdentifier string, proof []byte, clientState exported.ClientState) error {
+	consensusState, err := GetConsensusState(store, cdc, height)
+	if err != nil {
+		return err
+	}
 	const VerifyClientStateQuery = "verifyclientstate"
 	payload := make(map[string]map[string]interface{})
 	payload[VerifyClientStateQuery] = make(map[string]interface{})
@@ -314,7 +316,7 @@ func (c *ClientState) VerifyClientState(store sdk.KVStore, cdc codec.BinaryMarsh
 	inner["counterparty_client_identifier"] = counterpartyClientIdentifier
 	inner["proof"] = proof
 	inner["counterparty_client_state"] = clientState
-
+	inner["consensus_state"] = consensusState
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
 		return sdkerrors.Wrapf(ErrUnableToMarshalPayload, fmt.Sprintf("underlying error: %s", err.Error()))
@@ -323,18 +325,15 @@ func (c *ClientState) VerifyClientState(store sdk.KVStore, cdc codec.BinaryMarsh
 	if err != nil {
 		return sdkerrors.Wrapf(ErrUnableToQuery, fmt.Sprintf("underlying error: %s", err.Error()))
 	}
-
 	output := queryResponse{}
 	if err := json.Unmarshal(response, &output); err != nil {
 		return sdkerrors.Wrapf(ErrUnableToUnmarshalPayload, fmt.Sprintf("underlying error: %s", err.Error()))
 	}
-
 	if output.Result.IsValid {
 		return nil
 	} else {
 		return fmt.Errorf("%s error while validating client state", output.Result.ErrorMsg)
 	}
-
 }
 
 func (c *ClientState) VerifyClientConsensusState(store sdk.KVStore, cdc codec.BinaryMarshaler, height exported.Height, counterpartyClientIdentifier string, consensusHeight exported.Height, prefix exported.Prefix, proof []byte, consensusState exported.ConsensusState) error {
